@@ -1,0 +1,28 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="prism-grad-main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#4f46e5" />
+      <stop offset="100%" stopColor="#d946ef" />
+    </linearGradient>
+    <linearGradient id="prism-grad-highlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="white" stopOpacity="0.8" />
+      <stop offset="100%" stopColor="white" stopOpacity="0" />
+    </linearGradient>
+  </defs>
+  
+  {/* The Main Heart Base - Bold and Smooth */}
+  <path 
+    d="M50 90 C20 65 5 45 5 25 C5 10 20 5 35 15 C42 20 47 28 50 35 C53 28 58 20 65 15 C80 5 95 10 95 25 C95 45 80 65 50 90 Z" 
+    fill="url(#prism-grad-main)"
+  />
+
+  {/* A 'Glass' Facet Overlay - Adds the premium 3D feel */}
+  <path 
+    d="M50 35 C53 28 58 20 65 15 C80 5 95 10 95 25 C95 40 85 55 70 68 L50 35 Z" 
+    fill="url(#prism-grad-highlight)" 
+    opacity="0.3" 
+  />
+
+  {/* Inner Glow Polish */}
+  <circle cx="35" cy="30" r="10" fill="white" opacity="0.2" />
+</svg>
