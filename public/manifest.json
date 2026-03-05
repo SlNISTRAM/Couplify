@@ -1,6 +1,6 @@
 {
-  "name": "Couplify - Finanzas 2026",
-  "short_name": "Couplify Finance",
+  "name": "Couplify",
+  "short_name": "Couplify",
   "version": "1.0.2",
   "description": "Tu brújula financiera personalizada para el año 2026",
   "start_url": "./index.html",
@@ -9,19 +9,28 @@
   "theme_color": "#6366f1",
   "icons": [
     {
-      "src": "vite.svg",
+      "src": "logo.svg",
       "sizes": "32x32",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-        "src": "vite.svg",
-        "sizes": "192x192",
-        "type": "image/svg+xml"
+      "src": "logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-        "src": "vite.svg",
-        "sizes": "512x512",
-        "type": "image/svg+xml"
+      "src": "logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
