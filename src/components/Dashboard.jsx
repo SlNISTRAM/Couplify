@@ -263,22 +263,22 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
 
       {/* Account Balances Section */}
       <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center space-x-3">
-                  <div className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-xs"><Wallet size={16} /></div>
+                  <div className="bg-emerald-600 text-white min-w-8 w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-black text-xs"><Wallet size={16} /></div>
                   <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Saldos por Cuenta (Efectivo/Bancos)</h3>
               </div>
               <div className="flex items-center space-x-4">
                 <button 
                   onClick={() => setIsTransferOpen(true)}
-                  className="flex items-center space-x-1 text-[10px] font-black text-emerald-500 hover:text-emerald-600 transition-colors uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-900/10"
+                  className="flex items-center space-x-1 text-[10px] font-black text-emerald-500 hover:text-emerald-600 transition-colors uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-900/10 whitespace-nowrap flex-shrink-0"
                 >
                   <ArrowRightLeft size={14} />
                   <span>Transferencia</span>
                 </button>
                 <button 
                   onClick={() => setIsSettingsOpen(true)}
-                  className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                  className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors whitespace-nowrap flex-shrink-0"
                 >
                   Configurar Cuentas
                 </button>

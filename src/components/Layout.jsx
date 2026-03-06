@@ -255,7 +255,7 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
       </div>
 
       {/* Main Content Area */}
-      <main className="lg:ml-[22rem] p-4 md:p-10 max-w-6xl w-full overflow-x-hidden">
+      <main className="lg:ml-[22rem] p-4 pb-28 md:p-10 md:pb-10 max-w-6xl w-full overflow-x-hidden">
          {/* Mobile Top Bar */}
          <div className="lg:hidden flex items-center justify-between mb-8 pt-4 px-2">
             <div className="flex items-center space-x-4">

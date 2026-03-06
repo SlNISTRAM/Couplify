@@ -220,16 +220,16 @@ const GoalTracker = ({ stats }) => {
         return (
           <div key={goal.id} className="app-card p-6 overflow-hidden relative group">
             <div className="flex justify-between items-start mb-4 relative z-10">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 min-w-0 flex-1 pr-2">
                 <button 
                   onClick={() => !goal.isLocked && handleEdit(goal.id, goal)}
-                  className={`p-3 rounded-2xl ${goal.bg} ${goal.textColor} dark:bg-slate-800 dark:text-slate-100 ${!goal.isLocked ? 'hover:scale-110 active:scale-95 transition-all shadow-sm ring-1 ring-slate-100 dark:ring-slate-700' : 'cursor-default opacity-80'}`}
+                  className={`flex-shrink-0 p-3 rounded-2xl ${goal.bg} ${goal.textColor} dark:bg-slate-800 dark:text-slate-100 ${!goal.isLocked ? 'hover:scale-110 active:scale-95 transition-all shadow-sm ring-1 ring-slate-100 dark:ring-slate-700' : 'cursor-default opacity-80'}`}
                 >
                   {goal.isLocked ? <div className="relative">{goal.icon}</div> : goal.icon}
                 </button>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">{goal.name}</h3>
+                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{goal.name}</h3>
                     {!goal.isLocked ? (
                       <button onClick={() => handleEdit(goal.id, goal)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-300 hover:text-indigo-500">
                         <Pencil size={12} />
@@ -254,9 +254,9 @@ const GoalTracker = ({ stats }) => {
                       </button>
                     )}
                   </div>
-                  <div className="flex items-baseline space-x-1">
-                    <span className="text-2xl font-black text-slate-800 dark:text-white">{formatCompactCurrency(goal.saved)}</span>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">/ {formatCompactCurrency(goal.target)}</span>
+                  <div className="flex items-baseline space-x-1 flex-wrap">
+                    <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate max-w-full">{formatCompactCurrency(goal.saved)}</span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap">/ {formatCompactCurrency(goal.target)}</span>
                   </div>
                 </div>
               </div>
