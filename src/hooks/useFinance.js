@@ -355,7 +355,7 @@ export const useFinance = () => {
     }));
   };
 
-  const updateSavingsPayment = (monthIndex, type, field, amount, date = null) => {
+  const updateSavingsPayment = (monthIndex, type, field, amount, date = null, accountId = null) => {
     updateMonthData(monthIndex, (month) => {
       const targetGoal = (Number(month.savings[type]) || 0) + (Number(month.savings[type + '_partner'] !== undefined ? month.savings[type + '_partner'] : month.savings[type]) || 0);
       const currentPayments = month.savingsPayments?.[type] || { userPaid: 0, partnerPaid: 0, completed: false };
@@ -364,6 +364,9 @@ export const useFinance = () => {
         ...currentPayments,
         [field]: Number(amount)
       };
+
+      if (accountId && field === 'userPaid') updatedPayments.userAccountId = accountId;
+      if (accountId && field === 'partnerPaid') updatedPayments.partnerAccountId = accountId;
 
       // Recalculate completion
       const totalPaid = updatedPayments.userPaid + updatedPayments.partnerPaid;
@@ -595,11 +598,19 @@ export const useFinance = () => {
       });
 
       // Savings
-      const userSavingsRealizedInMonth = 
-        (Number(m.savingsPayments?.depa?.userPaid) || 0) + 
-        (Number(m.savingsPayments?.boda?.userPaid) || 0);
-      
-      cumulativeAccountStats.bank.balance -= userSavingsRealizedInMonth;
+      let userSavingsRealizedInMonth = 0;
+      ['depa', 'boda'].forEach(type => {
+        const p = m.savingsPayments?.[type];
+        if (p) {
+          const userPaid = Number(p.userPaid) || 0;
+          userSavingsRealizedInMonth += userPaid;
+          const userAcc = p.userAccountId || 'bank';
+          if (cumulativeAccountStats[userAcc]) {
+            cumulativeAccountStats[userAcc].balance -= userPaid;
+            if (i === monthIndex) cumulativeAccountStats[userAcc].spent += userPaid;
+          }
+        }
+      });
 
       // Legacy CarryOver Calculation (for budget logic)
       if (i < monthIndex) {

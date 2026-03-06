@@ -987,23 +987,43 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                             />
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-xs text-slate-400 mr-1">
-                            S/
-                          </span>
-                          <input
-                            type="number"
-                            value={payments.userPaid || ""}
-                            placeholder="0"
-                            onChange={(e) =>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center">
+                            <span className="text-xs text-slate-400 mr-1">
+                              S/
+                            </span>
+                            <input
+                              type="number"
+                              value={payments.userPaid || ""}
+                              placeholder="0"
+                              onChange={(e) =>
+                                updateSavingsPayment(
+                                  currentMonthIndex,
+                                  type,
+                                  "userPaid",
+                                  parseFloat(e.target.value) || 0,
+                                  payments.date,
+                                  payments.userAccountId || "bank"
+                                )
+                              }
+                              className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.userPaid >= userGoal ? "text-emerald-600" : "text-slate-600"}`}
+                            />
+                          </div>
+                          <AccountSelector
+                            value={payments.userAccountId || "bank"}
+                            onChange={(val) => {
                               updateSavingsPayment(
                                 currentMonthIndex,
                                 type,
                                 "userPaid",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.userPaid >= userGoal ? "text-emerald-600" : "text-slate-600"}`}
+                                payments.userPaid || 0,
+                                payments.date,
+                                val
+                              );
+                              showToast(`Origen: ${accounts.find(a => a.id === val)?.name}`, 'info');
+                            }}
+                            accounts={accounts}
+                            size="xs"
                           />
                         </div>
                       </div>
@@ -1080,23 +1100,43 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                             />
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-xs text-slate-400 mr-1">
-                            S/
-                          </span>
-                          <input
-                            type="number"
-                            value={payments.partnerPaid || ""}
-                            placeholder="0"
-                            onChange={(e) =>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center">
+                            <span className="text-xs text-slate-400 mr-1">
+                              S/
+                            </span>
+                            <input
+                              type="number"
+                              value={payments.partnerPaid || ""}
+                              placeholder="0"
+                              onChange={(e) =>
+                                updateSavingsPayment(
+                                  currentMonthIndex,
+                                  type,
+                                  "partnerPaid",
+                                  parseFloat(e.target.value) || 0,
+                                  payments.date,
+                                  payments.partnerAccountId || "bank"
+                                )
+                              }
+                              className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.partnerPaid >= partnerGoal ? "text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}
+                            />
+                          </div>
+                          <AccountSelector
+                            value={payments.partnerAccountId || "bank"}
+                            onChange={(val) => {
                               updateSavingsPayment(
                                 currentMonthIndex,
                                 type,
                                 "partnerPaid",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.partnerPaid >= partnerGoal ? "text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}
+                                payments.partnerPaid || 0,
+                                payments.date,
+                                val
+                              );
+                              showToast(`Origen: ${accounts.find(a => a.id === val)?.name}`, 'info');
+                            }}
+                            accounts={accounts}
+                            size="xs"
                           />
                         </div>
                       </div>
