@@ -11,9 +11,10 @@ import { useState } from 'react';
 
 // Old SavingsThermometer removed in favor of GoalTracker
 import { generateFinancialReport } from '../services/pdfExport';
-import { CreditCard, Banknote, X, Save } from 'lucide-react';
 import AccountSettingsModal from './AccountSettingsModal';
 import EncargosSection from './EncargosSection';
+import TransferModal from './TransferModal';
+import { ArrowRightLeft, CreditCard, Banknote, X, Save } from 'lucide-react';
 
 function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
   const { 
@@ -34,6 +35,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
   console.log('Dashboard render:', { getMonthsByYear, monthsDataLength: monthsData?.length });
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [payingCard, setPayingCard] = useState(null); // The card object being paid
   const [showSourceSelect, setShowSourceSelect] = useState(false);
   
@@ -266,12 +268,21 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
                   <div className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-xs"><Wallet size={16} /></div>
                   <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Saldos por Cuenta (Efectivo/Bancos)</h3>
               </div>
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors"
-              >
-                Configurar Cuentas
-              </button>
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => setIsTransferOpen(true)}
+                  className="flex items-center space-x-1 text-[10px] font-black text-emerald-500 hover:text-emerald-600 transition-colors uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-900/10"
+                >
+                  <ArrowRightLeft size={14} />
+                  <span>Transferencia</span>
+                </button>
+                <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                >
+                  Configurar Cuentas
+                </button>
+              </div>
           </div>
           <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar snap-x snap-mandatory">
               {Object.entries(accountBalances).map(([id, data]) => {
@@ -334,6 +345,13 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
         onClose={() => setIsSettingsOpen(false)} 
         accountBalances={accountBalances}
         currentMonthIndex={currentMonthGlobalIndex}
+      />
+
+      <TransferModal
+        isOpen={isTransferOpen}
+        onClose={() => setIsTransferOpen(false)}
+        currentMonthIndex={currentMonthGlobalIndex}
+        accountBalances={accountBalances}
       />
 
       {/* Encargos Section */}
