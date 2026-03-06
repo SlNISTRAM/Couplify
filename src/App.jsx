@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import MonthlyView from './components/MonthlyView';
 import Auth from './components/Auth';
 import UserProfileModal from './components/UserProfileModal';
+import OnboardingModal from './components/OnboardingModal';
 import { supabase } from './lib/supabase';
 
 import { ToastProvider } from './context/ToastContext';
@@ -17,6 +18,7 @@ function App() {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [userName, setUserName] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth()); 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -29,7 +31,7 @@ function App() {
       if (session?.user?.user_metadata?.display_name) {
         setUserName(session.user.user_metadata.display_name);
       } else if (session) {
-        setIsProfileModalOpen(true);
+        setIsOnboardingOpen(true);
       }
     });
 
@@ -40,7 +42,8 @@ function App() {
       if (session?.user?.user_metadata?.display_name) {
         setUserName(session.user.user_metadata.display_name);
       } else if (session) {
-        setIsProfileModalOpen(true);
+        // If logged in but no display name, it's a first-time user
+        setIsOnboardingOpen(true);
       }
     });
 
@@ -70,9 +73,15 @@ function App() {
   if (!session && !isGuestMode) {
     return (
       <ThemeProvider>
-        <Auth onGuestLogin={() => {
+      <Auth onGuestLogin={() => {
           setIsGuestMode(true);
-          setUserName('Invitado');
+          // Only show onboarding if no local data exists
+          const hasData = localStorage.getItem('finanzas_2026_data_v3');
+          if (!hasData) {
+            setIsOnboardingOpen(true);
+          } else {
+            setUserName('Invitado');
+          }
         }}/>
       </ThemeProvider>
     );
@@ -129,6 +138,16 @@ function App() {
               }
               setIsProfileModalOpen(false);
             }}
+        />
+
+        <OnboardingModal 
+          isOpen={isOnboardingOpen}
+          userId={session?.user?.id}
+          isGuest={isGuestMode}
+          onComplete={({ name }) => {
+            setUserName(name);
+            setIsOnboardingOpen(false);
+          }}
         />
       </ToastProvider>
       </FinanceProvider>

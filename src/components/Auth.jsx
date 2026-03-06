@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Mail, Lock, LogIn, UserPlus, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, ShieldCheck, AlertTriangle } from 'lucide-react';
 import Logo from './Logo';
 
 const Auth = ({ onGuestLogin }) => {
@@ -122,6 +122,10 @@ const Auth = ({ onGuestLogin }) => {
               >
                 Continuar como Invitado
               </button>
+              <div className="flex items-center justify-center space-x-1 mt-2 text-[8px] font-black text-rose-400 uppercase tracking-widest opacity-60">
+                <AlertTriangle size={10} />
+                <span>No se sincronizará entre dispositivos</span>
+              </div>
             </div>
           </div>
         </div>

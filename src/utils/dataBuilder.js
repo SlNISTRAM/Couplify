@@ -56,8 +56,8 @@ export const initializeYearData = () => {
             variableExpenses: [],
             // Metadata for goals (only needed in first month for reference, or all for ease)
             goalMetadata: (i === 0) ? {
-              depa: { name: "Nueva Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isLocked: false },
-              boda: { name: "Nueva Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isLocked: false }
+              depa: { name: "Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isLocked: false },
+              boda: { name: "Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isLocked: false }
             } : null,
             accountSettings: (i === 0) ? {
               cash: { initialBalance: 0, limit: 0 },

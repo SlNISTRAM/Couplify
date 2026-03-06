@@ -8,7 +8,8 @@ export const FinanceProvider = ({ children, userId, isGuest = false }) => {
 
   // We expose the same interface as useFinance would, but shared
   const value = useMemo(() => ({
-    ...financeData
+    ...financeData,
+    saveStatus: financeData.saveStatus
   }), [financeData]);
 
   return (
