@@ -27,11 +27,16 @@ export const getFinancialInsights = async (data, currentYear, currentMonthIndex,
         const totalIncomeRealized = baseRealized + bonusRealized + extraRealized;
 
         const totalFixedPlanned = (month.fixedExpenses || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-        const userSavingsPlanned = (Number(month.savings?.depa) || 0) + (Number(month.savings?.boda) || 0);
+        const userSavingsPlanned = Object.values(month.savings || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
         const totalVariable = month.variableExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
         
-        const depaProgress = (month.savingsPayments?.depa?.userPaid || 0) + (month.savingsPayments?.depa?.partnerPaid || 0);
-        const bodaProgress = (month.savingsPayments?.boda?.userPaid || 0) + (month.savingsPayments?.boda?.partnerPaid || 0);
+        const goalsProgressText = Object.entries(month.goalMetadata || data[0]?.goalMetadata || {
+            depa: { name: "Departamento" },
+            boda: { name: "Boda" }
+        }).map(([key, meta]) => {
+            const progress = (month.savingsPayments?.[key]?.userPaid || 0) + (month.savingsPayments?.[key]?.partnerPaid || 0);
+            return `- ${meta.name}: Llevan S/${progress} ahorrados este mes.`;
+        }).join('\n               ');
 
         const prompt = `
             Actúa como un consejero financiero experto y motivador para ${userName || 'el usuario'}.
@@ -44,8 +49,7 @@ export const getFinancialInsights = async (data, currentYear, currentMonthIndex,
             3. GASTOS VARIABLES (Antojos, comida extra, etc.):
                - Gastado hasta ahora: S/${totalVariable}
             4. PROGRESO DE METAS:
-               - Departamento: Llevan S/${depaProgress} ahorrados.
-               - Boda: Llevan S/${bodaProgress} ahorrados.
+               ${goalsProgressText}
 
             Instrucciones de respuesta:
             - Sé breve, directo y usa un tono amigable pero profesional.
@@ -134,19 +138,34 @@ export const getAiChatResponse = async (userMessage, chatHistory, data, currentY
         
         // Get goal metadata with targets
         const goalMetadata = data[0]?.goalMetadata || {
-            depa: { target: 19200 },
-            boda: { target: 9600 }
+            depa: { target: 19200, name: "Departamento" },
+            boda: { target: 9600, name: "Boda" }
         };
         
         // Calculate total saved across all months
-        let totalSavedDepa = 0;
-        let totalSavedBoda = 0;
+        const totalSavedGoals = {};
+        Object.keys(goalMetadata).forEach(k => totalSavedGoals[k] = 0);
+
         data.forEach(m => {
             if (m.savingsPayments) {
-                totalSavedDepa += (Number(m.savingsPayments.depa?.userPaid || 0) + Number(m.savingsPayments.depa?.partnerPaid || 0));
-                totalSavedBoda += (Number(m.savingsPayments.boda?.userPaid || 0) + Number(m.savingsPayments.boda?.partnerPaid || 0));
+                Object.keys(m.savingsPayments).forEach(k => {
+                   if (totalSavedGoals[k] !== undefined) {
+                       totalSavedGoals[k] += (Number(m.savingsPayments[k]?.userPaid || 0) + Number(m.savingsPayments[k]?.partnerPaid || 0));
+                   } 
+                });
             }
         });
+
+        const monthSavingsText = Object.entries(goalMetadata).map(([k, meta]) => {
+           return `- ${meta.name || k}: S/${Number(month?.savings?.[k]) || 0} por mes`;
+        }).join('\n');
+
+        const totalPlanned = month ? Object.values(month.savings || {}).reduce((s, v) => s + (Number(v) || 0), 0) : 0;
+        
+        const goalsTotalText = Object.entries(goalMetadata).map(([k, meta]) => {
+           const saved = totalSavedGoals[k] || 0;
+           return `- ${meta.name || k}: Meta S/${meta.target}, Ahorrado S/${saved} (${((saved / (meta.target || 1)) * 100).toFixed(1)}%)`;
+        }).join('\n');
         
         const contextStr = month ? `
 CONTEXTO FINANCIERO DE ${userName || 'EL USUARIO'} (MES ACTUAL):
@@ -155,13 +174,11 @@ CONTEXTO FINANCIERO DE ${userName || 'EL USUARIO'} (MES ACTUAL):
 - Gasto Variable (Hoy): S/${month.variableExpenses?.reduce((s, e) => s + Number(e.amount), 0) || 0}
 
 PLAN DE AHORRO MENSUAL:
-- Departamento: S/${Number(month.savings?.depa) || 0} por mes
-- Boda: S/${Number(month.savings?.boda) || 0} por mes
-- Total planeado: S/${(Number(month.savings?.depa) || 0) + (Number(month.savings?.boda) || 0)} por mes
+${monthSavingsText}
+- Total planeado: S/${totalPlanned} por mes
 
 METAS DE AHORRO (OBJETIVOS TOTALES):
-- Departamento: Meta S/${goalMetadata.depa.target}, Ahorrado S/${totalSavedDepa} (${((totalSavedDepa / goalMetadata.depa.target) * 100).toFixed(1)}%)
-- Boda: Meta S/${goalMetadata.boda.target}, Ahorrado S/${totalSavedBoda} (${((totalSavedBoda / goalMetadata.boda.target) * 100).toFixed(1)}%)
+${goalsTotalText}
         ` : 'No hay datos financieros para el mes actual.';
 
         const systemInstruction = `Eres "FinanSmart", un asesor financiero personal experto. Ayudas a parejas a ahorrar para su casa y boda.

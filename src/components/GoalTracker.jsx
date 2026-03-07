@@ -148,9 +148,9 @@ const SimulatorCard = ({ goal }) => {
 };
 
 const GoalTracker = ({ stats }) => {
-  const { updateGoalMetadata } = useFinance();
+  const { updateGoalMetadata, addGoal, deleteGoal } = useFinance();
   const [editingGoal, setEditingGoal] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', icon: '', target: '', isLocked: false, color: '', bg: '', text: '' });
+  const [editForm, setEditForm] = useState({ name: '', icon: 'Target', target: '', isLocked: false, color: 'from-blue-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600', isShared: true });
   
   // Modal State
   const [confirmConfig, setConfirmConfig] = useState({
@@ -164,58 +164,46 @@ const GoalTracker = ({ stats }) => {
 
   const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));
 
-  if (!stats || !stats.depa || !stats.boda) return <div className="p-8 text-center text-slate-400">Calculando metas...</div>;
+  if (!stats) return <div className="p-8 text-center text-slate-400">Calculando metas...</div>;
   
   const handleEdit = (id, goal) => {
     if (goal.isLocked) return;
     setEditingGoal(id);
     setEditForm({ 
-      name: goal.name, 
-      icon: goal.iconName, 
-      target: goal.target, 
-      isLocked: goal.isLocked,
-      color: goal.color,
-      bg: goal.bg,
-      text: goal.textColor
+      name: goal.name || '', 
+      icon: goal.iconName || 'Target', 
+      target: goal.target || '', 
+      isLocked: goal.isLocked || false,
+      color: goal.color || 'from-blue-500 to-indigo-600',
+      bg: goal.bg || 'bg-indigo-50',
+      text: goal.textColor || 'text-indigo-600',
+      isShared: goal.isShared !== false
     });
   };
 
   const saveEdit = () => {
-    updateGoalMetadata(editingGoal, editForm);
+    if (editingGoal === 'new') {
+      addGoal(editForm);
+    } else {
+      updateGoalMetadata(editingGoal, editForm);
+    }
     setEditingGoal(null);
   };
 
-  const goals = [
-    { 
-        id: 'depa', 
-        name: stats.depa.name, 
-        iconName: stats.depa.icon || 'Target',
-        icon: ICON_MAP[stats.depa.icon || 'Target'], 
-        color: stats.depa.color || 'from-blue-500 to-indigo-600',
-        bg: stats.depa.bg || 'bg-indigo-50',
-        textColor: stats.depa.text || 'text-indigo-600',
-        saved: stats.depa.saved,
-        target: stats.depa.target,
-        isLocked: stats.depa.isLocked
-    },
-    { 
-        id: 'boda', 
-        name: stats.boda.name, 
-        iconName: stats.boda.icon || 'Star',
-        icon: ICON_MAP[stats.boda.icon || 'Star'], 
-        color: stats.boda.color || 'from-rose-500 to-pink-600',
-        bg: stats.boda.bg || 'bg-rose-50',
-        textColor: stats.boda.text || 'text-rose-600',
-        saved: stats.boda.saved,
-        target: stats.boda.target,
-        isLocked: stats.boda.isLocked
-    }
-  ];
+  const goals = Object.keys(stats).map(key => {
+    const s = stats[key];
+    return {
+      id: key,
+      ...s,
+      iconName: s.icon || 'Target',
+      icon: ICON_MAP[s.icon || 'Target']
+    };
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       {goals.map(goal => {
-        const percentage = Math.min(Math.round((goal.saved / goal.target) * 100), 100);
+        const percentage = Math.min(Math.round((goal.saved / (goal.target || 1)) * 100), 100);
         
         return (
           <div key={goal.id} className="app-card p-6 overflow-hidden relative group">
@@ -231,9 +219,26 @@ const GoalTracker = ({ stats }) => {
                   <div className="flex items-center space-x-2">
                     <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{goal.name}</h3>
                     {!goal.isLocked ? (
-                      <button onClick={() => handleEdit(goal.id, goal)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-300 hover:text-indigo-500">
-                        <Pencil size={12} />
-                      </button>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                        <button onClick={() => handleEdit(goal.id, goal)} className="p-1.5 text-slate-300 hover:text-indigo-500 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-lg backdrop-blur-sm transition-all mr-1 shadow-sm">
+                          <Pencil size={12} />
+                        </button>
+                        <button onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Meta',
+                            message: `¿Estás seguro de eliminar "${goal.name}" permanentemente?`,
+                            confirmText: 'Sí, eliminar',
+                            type: 'danger',
+                            onConfirm: () => {
+                              deleteGoal(goal.id);
+                              closeConfirm();
+                            }
+                          });
+                        }} className="p-1.5 text-slate-300 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg backdrop-blur-sm transition-all shadow-sm">
+                          <X size={12} />
+                        </button>
+                      </div>
                     ) : (
                       <button 
                         onClick={() => {
@@ -304,6 +309,20 @@ const GoalTracker = ({ stats }) => {
         );
       })}
 
+      {/* Add New Goal Card */}
+      <div 
+        onClick={() => {
+          setEditingGoal('new');
+          setEditForm({ name: '', icon: 'Target', target: '', isLocked: false, color: 'from-blue-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600', isShared: true });
+        }}
+        className="app-card overflow-hidden p-6 min-h-[16rem] flex flex-col items-center justify-center opacity-70 hover:opacity-100 transition-all cursor-pointer border-2 border-dashed border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+      >
+        <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4 transition-transform hover:scale-110">
+          <Target size={24} />
+        </div>
+        <span className="text-sm font-black text-slate-500 uppercase tracking-widest text-center mt-2">Crear Nueva Meta</span>
+      </div>
+
       {/* Edit Modal */}
       {editingGoal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -337,6 +356,20 @@ const GoalTracker = ({ stats }) => {
                     className="w-full glass-input p-4 text-xs font-bold"
                   />
                 </div>
+              </div>
+
+              {/* Shared Toggle */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <div className="flex flex-col">
+                  <span className="text-sm font-black text-slate-700 dark:text-slate-200">Ahorro Compartido</span>
+                  <span className="text-[10px] text-slate-400 font-bold leading-tight mt-1">Si se desactiva, tu pareja no podrá aportar dinero a esta meta.</span>
+                </div>
+                <button
+                  onClick={() => setEditForm({...editForm, isShared: !editForm.isShared})}
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${editForm.isShared ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                >
+                  <div className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform ${editForm.isShared ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
               </div>
 
               <div>

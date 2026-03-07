@@ -79,10 +79,10 @@ export const generateFinancialReport = (userName, selectedYear, yearData, global
     }, 0);
 
     const totalSavings = yearData.reduce((sum, m) => {
-      const detail = m.savingsPayments;
-      const realized = 
-        (Number(detail?.depa?.userPaid || 0) + Number(detail?.depa?.partnerPaid || 0)) +
-        (Number(detail?.boda?.userPaid || 0) + Number(detail?.boda?.partnerPaid || 0));
+      const detail = m.savingsPayments || {};
+      const realized = Object.values(detail).reduce((acc, goal) => {
+        return acc + (Number(goal.userPaid || 0) + Number(goal.partnerPaid || 0));
+      }, 0);
       return sum + realized;
     }, 0);
 
@@ -144,20 +144,17 @@ export const generateFinancialReport = (userName, selectedYear, yearData, global
     doc.text('Metas de Vida', 15, yPos);
     yPos += 8;
 
-    const depaProgress = globalSavings.depa.target > 0 
-      ? ((globalSavings.depa.saved / globalSavings.depa.target) * 100).toFixed(1) 
-      : 0;
-    const bodaProgress = globalSavings.boda.target > 0 
-      ? ((globalSavings.boda.saved / globalSavings.boda.target) * 100).toFixed(1) 
-      : 0;
+    const goalsBody = Object.values(globalSavings).map(goal => {
+      const progress = goal.target > 0 
+        ? ((goal.saved / goal.target) * 100).toFixed(1) 
+        : 0;
+      return [goal.name, formatCurrency(goal.saved), formatCurrency(goal.target), `${progress}%`];
+    });
 
     autoTable(doc, {
       startY: yPos,
       head: [['Meta', 'Ahorrado', 'Objetivo', 'Progreso']],
-      body: [
-        ['Departamento', formatCurrency(globalSavings.depa.saved), formatCurrency(globalSavings.depa.target), `${depaProgress}%`],
-        ['Boda', formatCurrency(globalSavings.boda.saved), formatCurrency(globalSavings.boda.target), `${bodaProgress}%`],
-      ],
+      body: goalsBody,
       theme: 'striped',
       headStyles: {
         fillColor: colors.secondary,
@@ -257,8 +254,7 @@ export const generateFinancialReport = (userName, selectedYear, yearData, global
                           (m.incomeStatus?.bonus ? m.income.bonus : 0) +
                           (m.additionalIncomes || []).reduce((s, i) => s + (i.received ? Number(i.amount) : 0), 0);
       
-      const monthSavings = (Number(m.savingsPayments?.depa?.userPaid || 0) + Number(m.savingsPayments?.depa?.partnerPaid || 0)) +
-                           (Number(m.savingsPayments?.boda?.userPaid || 0) + Number(m.savingsPayments?.boda?.partnerPaid || 0));
+      const monthSavings = Object.values(m.savingsPayments || {}).reduce((s, g) => s + (Number(g.userPaid || 0) + Number(g.partnerPaid || 0)), 0);
       
       const monthExpenses = Object.values(m.payments || {}).reduce((s, p) => s + (Number(p.amountPaid) || 0), 0);
 

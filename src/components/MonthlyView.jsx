@@ -867,7 +867,10 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
             </div>
 
             <div className="app-card p-6 space-y-6">
-              {["depa", "boda"].map((type) => {
+              {Object.entries(monthData.goalMetadata || {
+                depa: { name: "Departamento", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isShared: true },
+                boda: { name: "Boda", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isShared: true }
+              }).map(([type, goalMeta]) => {
                 const userGoal = Number(monthData.savings?.[type] || 0);
                 // Partner goal defaults to user goal (legacy compatibility)
                 const partnerGoal =
@@ -875,7 +878,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                     ? Number(monthData.savings[type + "_partner"])
                     : userGoal;
 
-                const totalGoal = userGoal + partnerGoal;
+                const totalGoal = goalMeta.isShared === false ? userGoal : userGoal + partnerGoal;
 
                 const payments = monthData.savingsPayments?.[type] || {
                   userPaid: 0,
@@ -939,10 +942,10 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                           <p
                             className={`font-bold text-sm leading-none ${isCompleted ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-700 dark:text-slate-300"}`}
                           >
-                            {type === "depa" ? "Departamento" : "Boda"}
+                            {goalMeta.name}
                           </p>
                           <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
-                            Meta Juntos: {formatCurrency(totalGoal)}
+                            {goalMeta.isShared === false ? "Meta Individual" : "Meta Juntos"}: {formatCurrency(totalGoal)}
                           </p>
                         </div>
                       </div>
@@ -953,7 +956,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className={`grid gap-3 ${goalMeta.isShared === false ? "grid-cols-1" : "grid-cols-2"}`}>
                       <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-[9px] font-black text-slate-400 uppercase">
@@ -1028,6 +1031,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                         </div>
                       </div>
 
+                      {goalMeta.isShared !== false && (
                       <div className="bg-rose-50/30 dark:bg-rose-900/10 p-3 rounded-2xl border border-dashed border-rose-100 dark:border-rose-900/30">
                         <div className="flex justify-between items-center mb-1 group/partner">
                           {editingPartnerName ? (
@@ -1140,6 +1144,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                           />
                         </div>
                       </div>
+                      )}
                     </div>
                   </div>
                 );

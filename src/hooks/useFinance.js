@@ -242,20 +242,53 @@ export const useFinance = () => {
     }
   };
 
+  const getGoalMetadataOrDefault = (m) => m.goalMetadata || {
+    depa: { name: "Departamento", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isShared: true },
+    boda: { name: "Boda", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isShared: true }
+  };
+
   const updateGoalMetadata = (goalId, newMetadata) => {
-    updateAllMonthsData(prev => prev.map((m, idx) => {
-      // We can store it in all months to be safe, or just the first. Let's do all.
-      const currentMetadata = m.goalMetadata || {
-        depa: { name: "Nueva Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isLocked: false },
-        boda: { name: "Nueva Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isLocked: false }
-      };
-      
+    updateAllMonthsData(prev => prev.map((m) => {
+      const currentMetadata = getGoalMetadataOrDefault(m);
       return {
         ...m,
         goalMetadata: {
           ...currentMetadata,
           [goalId]: { ...currentMetadata[goalId], ...newMetadata }
         }
+      };
+    }));
+  };
+
+  const addGoal = (newGoal) => {
+    const goalId = `goal-${Date.now()}`;
+    updateAllMonthsData(prev => prev.map((m) => {
+      const currentMetadata = getGoalMetadataOrDefault(m);
+      return {
+        ...m,
+        goalMetadata: { ...currentMetadata, [goalId]: { ...newGoal, id: goalId } }
+      };
+    }));
+    return goalId;
+  };
+
+  const deleteGoal = (goalId) => {
+    updateAllMonthsData(prev => prev.map((m) => {
+      const currentMetadata = { ...getGoalMetadataOrDefault(m) };
+      delete currentMetadata[goalId];
+      
+      const newSavings = { ...(m.savings || {}) };
+      delete newSavings[goalId];
+      delete newSavings[`${goalId}_partner`];
+
+      const newSavingsPayments = { ...(m.savingsPayments || {}) };
+      delete newSavingsPayments[goalId];
+
+      return {
+        ...m,
+        goalMetadata: currentMetadata,
+        savings: newSavings,
+        savingsPayments: newSavingsPayments
       };
     }));
   };
@@ -599,7 +632,8 @@ export const useFinance = () => {
 
       // Savings
       let userSavingsRealizedInMonth = 0;
-      ['depa', 'boda'].forEach(type => {
+      const currentGoals = m.goalMetadata || { depa: {}, boda: {} };
+      Object.keys(currentGoals).forEach(type => {
         const p = m.savingsPayments?.[type];
         if (p) {
           const userPaid = Number(p.userPaid) || 0;
@@ -632,20 +666,21 @@ export const useFinance = () => {
         sum + (i.received ? Number(i.amount) : 0), 0);
     const totalIncomeRealized = baseRealized + bonusRealized + extraRealized;
     
-    const userSavingsRealized = 
-      (Number(month.savingsPayments?.depa?.userPaid) || 0) + 
-      (Number(month.savingsPayments?.boda?.userPaid) || 0);
+    const activeGoals = month.goalMetadata || { depa: {}, boda: {} };
+    let userSavingsRealized = 0;
+    let partnerSavingsRealized = 0;
+    let userSavingsPlanned = 0;
 
-    const partnerSavingsRealized = 
-      (Number(month.savingsPayments?.depa?.partnerPaid) || 0) + 
-      (Number(month.savingsPayments?.boda?.partnerPaid) || 0);
+    Object.keys(activeGoals).forEach(type => {
+      userSavingsRealized += Number(month.savingsPayments?.[type]?.userPaid) || 0;
+      partnerSavingsRealized += Number(month.savingsPayments?.[type]?.partnerPaid) || 0;
+      userSavingsPlanned += Number(month.savings?.[type]) || 0;
+    });
 
     const totalFixedPaid = Object.values(month.payments || {}).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
     const totalFixedPlanned = (month.fixedExpenses || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
     const totalVariable = month.variableExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
     const totalAdjustments = Object.values(month.accountAdjustments || {}).reduce((sum, adj) => sum + (Number(adj) || 0), 0);
-
-    const userSavingsPlanned = (Number(month.savings?.depa) || 0) + (Number(month.savings?.boda) || 0);
 
     // Encargos: money that's in the account but belongs to someone else
     const totalPendingEncargos = (month.encargos || []).reduce((sum, e) =>
@@ -689,7 +724,7 @@ export const useFinance = () => {
     const dailyBudget = variableBudget / daysRemaining;
 
     return {
-      availableProjected: totalIncomeProjected + totalAdjustments - (Number(month.savings.depa) + Number(month.savings.boda)) - totalFixedPlanned - totalVariable,
+      availableProjected: totalIncomeProjected + totalAdjustments - userSavingsPlanned - totalFixedPlanned - totalVariable,
       availableReal,
       monthlyNet: totalIncomeRealized + totalAdjustments - userSavingsRealized - totalFixedPaid - totalVariable - totalPendingEncargos,
       totalPendingEncargos,
@@ -707,39 +742,39 @@ export const useFinance = () => {
 
   const getGlobalSavingsStats = () => {
     const metadata = data[0]?.goalMetadata || {
-        depa: { name: "Nueva Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isLocked: false },
-        boda: { name: "Nueva Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isLocked: false }
+        depa: { name: "Departamento", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isShared: true },
+        boda: { name: "Boda", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isShared: true }
     };
 
-    const stats = {
-        depa: { ...metadata.depa, saved: 0, target: Number(metadata.depa.target) || 19200, avgMonthly: 0 },
-        boda: { ...metadata.boda, saved: 0, target: Number(metadata.boda.target) || 9600, avgMonthly: 0 }
-    };
+    const stats = {};
+    const monthlyTotals = {};
+    Object.keys(metadata).forEach(key => {
+        stats[key] = { ...metadata[key], saved: 0, target: Number(metadata[key].target) || 0, avgMonthly: 0 };
+        monthlyTotals[key] = 0;
+    });
 
     let monthsWithContributions = 0;
-    const monthlyTotals = { depa: 0, boda: 0 };
 
     data.forEach(m => {
         let monthHasSavings = false;
         if (m.savingsPayments) {
-            const depaPaid = (Number(m.savingsPayments.depa?.userPaid || 0) + Number(m.savingsPayments.depa?.partnerPaid || 0));
-            const bodaPaid = (Number(m.savingsPayments.boda?.userPaid || 0) + Number(m.savingsPayments.boda?.partnerPaid || 0));
-            
-            stats.depa.saved += depaPaid;
-            stats.boda.saved += bodaPaid;
-
-            if (depaPaid > 0 || bodaPaid > 0) {
-                monthHasSavings = true;
-                monthlyTotals.depa += depaPaid;
-                monthlyTotals.boda += bodaPaid;
-                monthsWithContributions++;
-            }
+            Object.keys(metadata).forEach(key => {
+                const paid = (Number(m.savingsPayments[key]?.userPaid || 0) + Number(m.savingsPayments[key]?.partnerPaid || 0));
+                stats[key].saved += paid;
+                
+                if (paid > 0) {
+                    monthHasSavings = true;
+                    monthlyTotals[key] += paid;
+                }
+            });
+            if (monthHasSavings) monthsWithContributions++;
         }
     });
 
     if (monthsWithContributions > 0) {
-        stats.depa.avgMonthly = monthlyTotals.depa / monthsWithContributions;
-        stats.boda.avgMonthly = monthlyTotals.boda / monthsWithContributions;
+        Object.keys(metadata).forEach(key => {
+            stats[key].avgMonthly = monthlyTotals[key] / monthsWithContributions;
+        });
     }
 
     return stats;
@@ -799,9 +834,14 @@ export const useFinance = () => {
     updateVariableExpense,
     addFixedExpense,
     removeFixedExpense,
+    restoreFixedExpense,
+    moveFixedExpense,
     updateFixedPayment,
     updateFixedExpenseAmount,
     updateFixedExpenseMetadata,
+    updateGoalMetadata,
+    addGoal,
+    deleteGoal,
     updateSavingsAmount,
     updateSavingsGoal,
     updateSavingsPayment,
