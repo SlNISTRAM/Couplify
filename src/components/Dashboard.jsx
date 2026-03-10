@@ -12,7 +12,9 @@ import { useState } from 'react';
 // Old SavingsThermometer removed in favor of GoalTracker
 import { generateFinancialReport } from '../services/pdfExport';
 import AccountSettingsModal from './AccountSettingsModal';
+import BovedasSection from './BovedasSection';
 import EncargosSection from './EncargosSection';
+import PrestamosSection from './PrestamosSection';
 import TransferModal from './TransferModal';
 import { ArrowRightLeft, CreditCard, Banknote, X, Save } from 'lucide-react';
 
@@ -37,7 +39,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [payingCard, setPayingCard] = useState(null); // The card object being paid
-  const [showSourceSelect, setShowSourceSelect] = useState(false);
+  const [payingSource, setPayingSource] = useState(null); // The source account object being selected
   
   if (error) {
     return (
@@ -111,7 +113,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
     updateAccountAdjustment(currentMonthGlobalIndex, sourceId, -debtAmount);
     
     setPayingCard(null);
-    setShowSourceSelect(false);
+    setPayingSource(null);
   };
 
 
@@ -143,30 +145,51 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0 w-full md:w-auto md:justify-end">
                     {payingCard?.id === card.id ? (
-                      <div className="flex items-center space-x-2 animate-scale-in">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">¿De dónde pagas?</span>
-                        {accounts.filter(a => a.type !== 'credit').map(source => (
+                      payingSource ? (
+                        <div className="flex items-center flex-wrap gap-2 animate-scale-in bg-white dark:bg-slate-900/80 p-2 rounded-[20px] border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+                           <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest px-2">
+                             ¿Confirmar pago desde {payingSource.name}?
+                           </span>
+                           <button 
+                             onClick={() => handleQuickPay(card, payingSource.id)} 
+                             className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all"
+                           >
+                             Sí, Confirmar
+                           </button>
+                           <button 
+                             onClick={() => setPayingSource(null)} 
+                             className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-black hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                           >
+                             Cancelar
+                           </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center flex-wrap gap-2 animate-scale-in bg-white/60 dark:bg-slate-900/40 p-2 rounded-[20px] border border-slate-200 dark:border-slate-700/50 backdrop-blur-sm">
+                          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-2">¿De dónde pagas?</span>
+                          {accounts.filter(a => a.type !== 'credit').map(source => (
+                            <button 
+                              key={source.id}
+                              onClick={() => setPayingSource(source)}
+                              className="flex items-center space-x-1.5 px-3 py-2 bg-white dark:bg-slate-800 border-2 border-transparent hover:border-indigo-500 dark:hover:border-indigo-500/50 rounded-xl text-[10px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300 shadow-sm transition-all hover:scale-[1.03] active:scale-95"
+                            >
+                              {source.id === 'cash' ? <Banknote size={14} className="text-emerald-500" /> : <Wallet size={14} className="text-indigo-500" />}
+                              <span>{source.name}</span>
+                            </button>
+                          ))}
                           <button 
-                            key={source.id}
-                            onClick={() => handleQuickPay(card, source.id)}
-                            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-tight hover:border-emerald-500 hover:text-emerald-500 transition-all text-slate-600 dark:text-slate-300"
+                            onClick={() => { setPayingCard(null); setPayingSource(null); }}
+                            className="p-2 text-slate-400 hover:bg-rose-100 dark:hover:bg-slate-800 hover:text-rose-500 rounded-xl transition-colors ml-1"
                           >
-                            {source.name}
+                            <X size={16} />
                           </button>
-                        ))}
-                        <button 
-                          onClick={() => setPayingCard(null)}
-                          className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
+                        </div>
+                      )
                     ) : (
                       <button 
                         onClick={() => setPayingCard(card)}
-                        className={`px-6 py-2 rounded-xl text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 ${isUrgent ? 'bg-rose-500 shadow-rose-500/20 hover:bg-rose-600' : 'bg-amber-500 shadow-amber-500/20 hover:bg-amber-600'}`}
+                        className={`px-6 py-2 rounded-xl text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 whitespace-nowrap ${isUrgent ? 'bg-rose-500 shadow-rose-500/20 hover:bg-rose-600 hover:shadow-rose-500/40' : 'bg-amber-500 shadow-amber-500/20 hover:bg-amber-600 hover:shadow-amber-500/40'}`}
                       >
                         Ya pagué
                       </button>
@@ -285,7 +308,9 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
               </div>
           </div>
           <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar snap-x snap-mandatory">
-              {Object.entries(accountBalances).map(([id, data]) => {
+              {Object.entries(accountBalances)
+                .filter(([_, data]) => data.type !== 'vault')
+                .map(([id, data]) => {
                   const isCredit = data.type === 'credit';
                   const isNegative = data.balance < 0;
                   
@@ -339,6 +364,9 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
 
       <GoalTracker stats={globalSavings} />
 
+      {/* Vaults Section */}
+      <BovedasSection accountBalances={accountBalances} />
+
       {/* Account Settings Modal */}
       <AccountSettingsModal 
         isOpen={isSettingsOpen} 
@@ -359,6 +387,12 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
         currentMonthIndex={currentMonthGlobalIndex}
         encargos={currentMonthGlobalIndex !== -1 ? (monthsData[currentMonthGlobalIndex]?.encargos || []) : []}
         stats={currentMonthStats}
+      />
+
+      {/* Prestamos Personales Section */}
+      <PrestamosSection
+        currentMonthIndex={currentMonthGlobalIndex}
+        prestamos={currentMonthGlobalIndex !== -1 ? (monthsData[currentMonthGlobalIndex]?.prestamos || []) : []}
       />
 
       {/* Expense Analysis Section */}

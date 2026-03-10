@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Banknote, CreditCard, Wallet, AlertTriangle, Pencil, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { X, Save, Banknote, CreditCard, Wallet, AlertTriangle, Pencil, ChevronUp, ChevronDown, Eye, EyeOff, PiggyBank } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
 import { useToast } from '../context/ToastContext';
 import { ACCOUNTS } from '../utils/constants';
@@ -98,8 +98,8 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
       name: newAcc.name,
       type: newAcc.type,
       currency: newAcc.currency,
-      icon: newAcc.type === 'credit' ? 'CreditCard' : 'Wallet',
-      color: newAcc.type === 'credit' ? 'text-rose-500' : 'text-blue-500'
+      icon: newAcc.type === 'credit' ? 'CreditCard' : newAcc.type === 'vault' ? 'PiggyBank' : 'Wallet',
+      color: newAcc.type === 'credit' ? 'text-rose-500' : newAcc.type === 'vault' ? 'text-purple-500' : 'text-blue-500'
     };
     addAccount(accountData);
     setNewAcc({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '' });
@@ -118,8 +118,9 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
     }
   };
 
-  const getIcon = (id) => {
-    switch (id) {
+  const getIcon = (acc) => {
+    if (acc.type === 'vault') return <PiggyBank size={20} className="text-purple-500" />;
+    switch (acc.id) {
       case 'cash': return <Banknote size={20} className="text-emerald-500" />;
       case 'bank': return <Wallet size={20} className="text-blue-500" />;
       default: return <CreditCard size={20} className="text-indigo-500" />;
@@ -210,7 +211,7 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
 
                 <div className="flex items-center space-x-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 transition-all mb-4 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500">
                   <div className="text-slate-400 flex-shrink-0">
-                    {getIcon(acc.id)}
+                    {getIcon(acc)}
                   </div>
                   <div className="flex-1 relative flex items-center">
                     <input 
@@ -394,15 +395,21 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                   <div className="flex space-x-2">
                     <button 
                       onClick={() => setNewAcc({...newAcc, type: 'debit'})}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${newAcc.type === 'debit' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${newAcc.type === 'debit' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800'}`}
                     >
                       Débito
                     </button>
                     <button 
                       onClick={() => setNewAcc({...newAcc, type: 'credit'})}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${newAcc.type === 'credit' ? 'bg-rose-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${newAcc.type === 'credit' ? 'bg-rose-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800'}`}
                     >
                       Crédito
+                    </button>
+                    <button 
+                      onClick={() => setNewAcc({...newAcc, type: 'vault'})}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${newAcc.type === 'vault' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-800'}`}
+                    >
+                      Bóveda/Ahorro
                     </button>
                   </div>
 

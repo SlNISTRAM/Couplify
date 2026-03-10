@@ -31,7 +31,13 @@ const Auth = ({ onGuestLogin }) => {
         if (error) throw error;
       }
     } catch (error) {
-      setMessage({ type: 'error', content: error.message });
+      let friendlyMessage = error.message;
+      if (error.message.includes('Email not confirmed')) {
+        friendlyMessage = 'Debes confirmar tu email antes de entrar. Revisa tu bandeja de entrada o Spam.';
+      } else if (error.message.includes('Invalid login credentials')) {
+        friendlyMessage = 'Usuario o contraseña incorrectos.';
+      }
+      setMessage({ type: 'error', content: friendlyMessage });
     } finally {
       setLoading(false);
     }

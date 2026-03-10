@@ -26,6 +26,21 @@ function App() {
   useEffect(() => {
     if (!supabase) return;
 
+    // 1. Check for errors in URL fragment (Supabase redirect)
+    const hash = window.location.hash;
+    if (hash && hash.includes('error=')) {
+      const params = new URLSearchParams(hash.replace('#', '?'));
+      const errorMsg = params.get('error_description') || 'Error de sesión';
+      console.error("Auth redirect error:", errorMsg);
+      // Clear session if it's an expiration error
+      if (hash.includes('otp_expired') || hash.includes('access_denied')) {
+        supabase.auth.signOut().then(() => {
+          setSession(null);
+          // Optional: You could set a notification here
+        });
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user?.user_metadata?.display_name) {
@@ -42,7 +57,6 @@ function App() {
       if (session?.user?.user_metadata?.display_name) {
         setUserName(session.user.user_metadata.display_name);
       } else if (session) {
-        // If logged in but no display name, it's a first-time user
         setIsOnboardingOpen(true);
       }
     });

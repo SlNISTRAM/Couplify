@@ -303,6 +303,13 @@ export const useFinance = () => {
     }));
   };
 
+  const setupInitialAccounts = (settings) => {
+    updateMonthData(0, (month) => ({
+      ...month,
+      accountSettings: settings
+    }));
+  };
+
   const updateAccountAdjustment = (monthIndex, accountId, adjustmentAmount, additive = true) => {
     updateMonthData(monthIndex, (month) => {
       const currentAdjustments = month.accountAdjustments || {};
@@ -388,7 +395,7 @@ export const useFinance = () => {
     }));
   };
 
-  const updateSavingsPayment = (monthIndex, type, field, amount, date = null, accountId = null) => {
+  const updateSavingsPayment = (monthIndex, type, field, amount, date = null, accountId = null, destAccountId = null) => {
     updateMonthData(monthIndex, (month) => {
       const targetGoal = (Number(month.savings[type]) || 0) + (Number(month.savings[type + '_partner'] !== undefined ? month.savings[type + '_partner'] : month.savings[type]) || 0);
       const currentPayments = month.savingsPayments?.[type] || { userPaid: 0, partnerPaid: 0, completed: false };
@@ -398,8 +405,14 @@ export const useFinance = () => {
         [field]: Number(amount)
       };
 
-      if (accountId && field === 'userPaid') updatedPayments.userAccountId = accountId;
-      if (accountId && field === 'partnerPaid') updatedPayments.partnerAccountId = accountId;
+      // Helper to update IDs correctly
+      if (field === 'userPaid') {
+        if (accountId) updatedPayments.userAccountId = accountId;
+        if (destAccountId) updatedPayments.userDestAccountId = destAccountId;
+      } else if (field === 'partnerPaid') {
+        if (accountId) updatedPayments.partnerAccountId = accountId;
+        if (destAccountId) updatedPayments.partnerDestAccountId = destAccountId;
+      }
 
       // Recalculate completion
       const totalPaid = updatedPayments.userPaid + updatedPayments.partnerPaid;
@@ -554,6 +567,33 @@ export const useFinance = () => {
     }));
   };
 
+  const addPrestamo = (monthIndex, prestamo) => {
+    updateMonthData(monthIndex, (month) => ({
+      ...month,
+      prestamos: [...(month.prestamos || []), { 
+        ...prestamo, 
+        id: `prestamo-${Date.now()}`,
+        status: 'pending' // pending = money received, debt active. paid = money returned, debt settled.
+      }]
+    }));
+  };
+
+  const completePrestamo = (monthIndex, prestamoId) => {
+    updateMonthData(monthIndex, (month) => ({
+      ...month,
+      prestamos: (month.prestamos || []).map(p =>
+        p.id === prestamoId ? { ...p, status: 'paid' } : p
+      )
+    }));
+  };
+
+  const removePrestamo = (monthIndex, prestamoId) => {
+    updateMonthData(monthIndex, (month) => ({
+      ...month,
+      prestamos: (month.prestamos || []).filter(p => p.id !== prestamoId)
+    }));
+  };
+
   const calculateMonthStats = (monthIndex) => {
     const month = data[monthIndex];
     if (!month) return null;
@@ -630,6 +670,22 @@ export const useFinance = () => {
         }
       });
 
+      // 1.6 Apply Prestamos (Personal Loans)
+      // Pending received: we got money, bank balance increases.
+      // Pending given: we lent money, bank balance decreases.
+      (m.prestamos || []).forEach(p => {
+        if (p.status === 'pending') {
+          const accountId = p.accountId || 'bank';
+          if (cumulativeAccountStats[accountId]) {
+            if (p.type === 'given') {
+              cumulativeAccountStats[accountId].balance -= Number(p.amount);
+            } else {
+              cumulativeAccountStats[accountId].balance += Number(p.amount);
+            }
+          }
+        }
+      });
+
       // Savings
       let userSavingsRealizedInMonth = 0;
       const currentGoals = m.goalMetadata || { depa: {}, boda: {} };
@@ -642,6 +698,16 @@ export const useFinance = () => {
           if (cumulativeAccountStats[userAcc]) {
             cumulativeAccountStats[userAcc].balance -= userPaid;
             if (i === monthIndex) cumulativeAccountStats[userAcc].spent += userPaid;
+          }
+          if (p.userDestAccountId && cumulativeAccountStats[p.userDestAccountId]) {
+            cumulativeAccountStats[p.userDestAccountId].balance += userPaid;
+          }
+
+          const partnerPaid = Number(p.partnerPaid) || 0;
+          // Partner fallback: use user's destination vault if partner's is not set
+          const partnerDestAcc = p.partnerDestAccountId || p.userDestAccountId;
+          if (partnerDestAcc && cumulativeAccountStats[partnerDestAcc]) {
+            cumulativeAccountStats[partnerDestAcc].balance += partnerPaid;
           }
         }
       });
@@ -687,7 +753,17 @@ export const useFinance = () => {
       e.status === 'pending' ? sum + (Number(e.amount) || 0) : sum, 0
     );
 
-    const variableBudget = Math.max(0, effectiveCarryOver + totalIncomeRealized + totalAdjustments - totalFixedPaid - userSavingsRealized - totalPendingEncargos);
+    // Prestamos: money we owe to someone else (but we already have it in our accounts)
+    const totalPendingPrestamosRecibidos = (month.prestamos || []).reduce((sum, p) =>
+      (p.status === 'pending' && p.type !== 'given') ? sum + (Number(p.amount) || 0) : sum, 0
+    );
+
+    // Prestamos: money owed to us (it represents a piece of our variable budget that is lent out)
+    const totalPendingPrestamosOtorgados = (month.prestamos || []).reduce((sum, p) =>
+      (p.status === 'pending' && p.type === 'given') ? sum + (Number(p.amount) || 0) : sum, 0
+    );
+
+    const variableBudget = Math.max(0, effectiveCarryOver + totalIncomeRealized + totalAdjustments - totalFixedPaid - userSavingsRealized - totalPendingEncargos - totalPendingPrestamosOtorgados);
     
     // Account details for UI
     const accountBalances = accounts.reduce((acc, account) => {
@@ -710,7 +786,7 @@ export const useFinance = () => {
     // availableReal = sum of debit account balances (includes sync adjustments) - encargos
     // This mirrors what the user actually has in their bank/cash right now.
     const totalDebitBalance = accounts
-      .filter(a => (a.type || 'debit') !== 'credit')
+      .filter(a => (a.type || 'debit') !== 'credit' && a.type !== 'vault')
       .reduce((sum, a) => {
         return sum + (cumulativeAccountStats[a.id]?.balance || 0);
       }, 0);
@@ -726,8 +802,10 @@ export const useFinance = () => {
     return {
       availableProjected: totalIncomeProjected + totalAdjustments - userSavingsPlanned - totalFixedPlanned - totalVariable,
       availableReal,
-      monthlyNet: totalIncomeRealized + totalAdjustments - userSavingsRealized - totalFixedPaid - totalVariable - totalPendingEncargos,
+      monthlyNet: totalIncomeRealized + totalAdjustments - userSavingsRealized - totalFixedPaid - totalVariable - totalPendingEncargos - totalPendingPrestamosOtorgados,
       totalPendingEncargos,
+      totalPendingPrestamosRecibidos,
+      totalPendingPrestamosOtorgados,
       carryOver: effectiveCarryOver,
       totalIncome: totalIncomeRealized,
       totalFixed: totalFixedPlanned,
@@ -855,11 +933,15 @@ export const useFinance = () => {
     updateBonusIncome,
     updateVariableBudget,
     addInstallmentExpense,
+    addPrestamo,
+    completePrestamo,
+    removePrestamo,
     getExpenseDistribution,
     getMonthlyTrend,
     getGlobalSavingsStats,
     updateGoalMetadata,
     updateAccountSettings,
+    setupInitialAccounts,
     updateAccountAdjustment,
     resetMonthCarryover,
     accounts,

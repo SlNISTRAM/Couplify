@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ArrowRightLeft, Send, Wallet, Banknote, CreditCard, Save } from 'lucide-react';
+import { X, ArrowRightLeft, Send, Wallet, Banknote, CreditCard, Save, AlertTriangle } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
 import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../utils/helpers';
@@ -35,6 +35,25 @@ const TransferModal = ({ isOpen, onClose, currentMonthIndex, accountBalances }) 
 
     const fromAcc = accounts.find(a => a.id === transfer.fromId);
     const toAcc = accounts.find(a => a.id === transfer.toId);
+    
+    // Prevent overpaying a credit card
+    if (toAcc.type === 'credit') {
+      const currentDebt = accountBalances[toAcc.id]?.balance || 0;
+      // In this app debit/cash is positive balance, credit card debt might be stored depending on usage.
+      // Usually, if you have a debt, the balance might be negative or positive depending on implementation.
+      // Assuming 'balance' is the amount owed (or negative if owed). Let's check how it's structured.
+      // Wait, let's look at useFinance.js: credit cards have a limit and balance.
+      // When spent, balance decreases (goes negative).
+      // So debt is Math.abs(currentDebt) if currentDebt < 0.
+      if (currentDebt >= 0) {
+        showToast(`La tarjeta ${toAcc.name} no tiene deuda pendiente.`, 'error');
+        return;
+      }
+      if (amount > Math.abs(currentDebt)) {
+        showToast(`No puedes pagar más de la deuda actual (${formatCurrency(Math.abs(currentDebt), toAcc.currency)}).`, 'error');
+        return;
+      }
+    }
 
     // 1. Decrease source
     updateAccountAdjustment(currentMonthIndex, transfer.fromId, -amount, true);
@@ -162,6 +181,36 @@ const TransferModal = ({ isOpen, onClose, currentMonthIndex, accountBalances }) 
                 />
               </div>
             </div>
+
+            {/* Warning for Credit to Debit/Cash transfer */}
+            {transfer.fromId && transfer.toId && 
+              accounts.find(a => a.id === transfer.fromId)?.type === 'credit' && 
+              accounts.find(a => a.id === transfer.toId)?.type !== 'credit' && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-2xl flex items-start space-x-3 transition-all animate-fade-in-up">
+                <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest mb-1">¡Atención: Disposición de Efectivo!</h4>
+                  <p className="text-[10px] font-bold text-amber-700/80 dark:text-amber-300/80 leading-snug">
+                    Estás intentando transferir dinero desde una <b>Tarjeta de Crédito</b> hacia una cuenta de Débito o Efectivo. Los bancos suelen cobrar <b>comisiones muy altas e intereses diarios</b> por esta operación. Úsalo solo en verdaderas emergencias.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Warning for Credit to Credit transfer */}
+            {transfer.fromId && transfer.toId && 
+              accounts.find(a => a.id === transfer.fromId)?.type === 'credit' && 
+              accounts.find(a => a.id === transfer.toId)?.type === 'credit' && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 p-4 rounded-2xl flex items-start space-x-3 transition-all animate-fade-in-up">
+                <ArrowRightLeft size={20} className="text-indigo-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase tracking-widest mb-1">Compra de Deuda</h4>
+                  <p className="text-[10px] font-bold text-indigo-700/80 dark:text-indigo-300/80 leading-snug">
+                    Estás transfiriendo saldo entre dos <b>Tarjetas de Crédito</b>. Esto simula una compra de deuda financiera o el pago parcial de una tarjeta usando los fondos de otra.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"

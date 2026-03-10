@@ -40,12 +40,12 @@ export const initializeYearData = () => {
             additionalIncomes: [],
             fixedExpenses: monthlyFixed,
             savings: {
-                depa: (year === 2026 && i < 2) ? 0 : SAVINGS_GOALS.depa.monthly,
-                boda: (year === 2026 && i < 2) ? 0 : SAVINGS_GOALS.boda.monthly,
+                goal1: (year === 2026 && i < 2) ? 0 : SAVINGS_GOALS.goal1.monthly,
+                goal2: (year === 2026 && i < 2) ? 0 : SAVINGS_GOALS.goal2.monthly,
             },
             savingsPayments: { 
-                depa: { userPaid: 0, partnerPaid: 0, completed: false }, 
-                boda: { userPaid: 0, partnerPaid: 0, completed: false } 
+                goal1: { userPaid: 0, partnerPaid: 0, completed: false }, 
+                goal2: { userPaid: 0, partnerPaid: 0, completed: false } 
             },
             // Track payments
             payments: monthlyFixed.reduce((acc, item) => ({
@@ -56,8 +56,8 @@ export const initializeYearData = () => {
             variableExpenses: [],
             // Metadata for goals (only needed in first month for reference, or all for ease)
             goalMetadata: (i === 0) ? {
-              depa: { name: "Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isLocked: false },
-              boda: { name: "Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isLocked: false }
+              goal1: { name: "Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 0, isLocked: false },
+              goal2: { name: "Meta 2", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 0, isLocked: false }
             } : null,
             accountSettings: (i === 0) ? {
               cash: { initialBalance: 0, limit: 0 },

@@ -30,12 +30,10 @@ export const getFinancialInsights = async (data, currentYear, currentMonthIndex,
         const userSavingsPlanned = Object.values(month.savings || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
         const totalVariable = month.variableExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
         
-        const goalsProgressText = Object.entries(month.goalMetadata || data[0]?.goalMetadata || {
-            depa: { name: "Departamento" },
-            boda: { name: "Boda" }
-        }).map(([key, meta]) => {
+        const goalMetadata = month.goalMetadata || data[0]?.goalMetadata || {};
+        const goalsProgressText = Object.entries(goalMetadata).map(([key, meta]) => {
             const progress = (month.savingsPayments?.[key]?.userPaid || 0) + (month.savingsPayments?.[key]?.partnerPaid || 0);
-            return `- ${meta.name}: Llevan S/${progress} ahorrados este mes.`;
+            return `- ${meta.name || key}: Llevan S/${progress} ahorrados este mes.`;
         }).join('\n               ');
 
         const prompt = `
@@ -45,7 +43,7 @@ export const getFinancialInsights = async (data, currentYear, currentMonthIndex,
             1. INGRESOS COBRADOS (Disponibles hoy): S/${totalIncomeRealized}
             2. OBLIGACIONES MENSUALES (Lo que debe pagar sí o sí):
                - Pagos Fijos Totales: S/${totalFixedPlanned}
-               - Ahorro Planeado (Depa + Boda): S/${userSavingsPlanned}
+               - Ahorro Planeado (Metas): S/${userSavingsPlanned}
             3. GASTOS VARIABLES (Antojos, comida extra, etc.):
                - Gastado hasta ahora: S/${totalVariable}
             4. PROGRESO DE METAS:
@@ -137,10 +135,7 @@ export const getAiChatResponse = async (userMessage, chatHistory, data, currentY
         const month = data.find(m => m.year === currentYear && m.monthIndex === currentMonthIndex);
         
         // Get goal metadata with targets
-        const goalMetadata = data[0]?.goalMetadata || {
-            depa: { target: 19200, name: "Departamento" },
-            boda: { target: 9600, name: "Boda" }
-        };
+        const goalMetadata = data[0]?.goalMetadata || {};
         
         // Calculate total saved across all months
         const totalSavedGoals = {};
@@ -181,7 +176,7 @@ METAS DE AHORRO (OBJETIVOS TOTALES):
 ${goalsTotalText}
         ` : 'No hay datos financieros para el mes actual.';
 
-        const systemInstruction = `Eres "FinanSmart", un asesor financiero personal experto. Ayudas a parejas a ahorrar para su casa y boda.
+        const systemInstruction = `Eres "FinanSmart", un asesor financiero personal experto. Ayudas a parejas a gestionar sus finanzas y alcanzar sus metas de ahorro compartidas.
 
 ${contextStr}
 

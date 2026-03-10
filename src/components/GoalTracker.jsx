@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
-import ConfirmModal from './ConfirmModal';
-import { formatCurrency, formatCompactCurrency } from '../utils/helpers';
-import { useFinance } from '../hooks/useFinance';
-import { 
-  Heart, Home, Target, Car, Plane, GraduationCap, Wallet, 
-  Smartphone, Briefcase, Palmtree, Zap, ShoppingBag, 
-  Coffee, Camera, Music, Dumbbell, Star, MapPin, 
-  Pencil, X, Check, Lock, Unlock, Calendar, TrendingUp
-} from 'lucide-react';
+import React, { useState } from "react";
+import ConfirmModal from "./ConfirmModal";
+import { formatCurrency, formatCompactCurrency } from "../utils/helpers";
+import { useFinance } from "../hooks/useFinance";
+import {
+  Heart,
+  Home,
+  Target,
+  Car,
+  Plane,
+  GraduationCap,
+  Wallet,
+  Smartphone,
+  Briefcase,
+  Palmtree,
+  Zap,
+  ShoppingBag,
+  Coffee,
+  Camera,
+  Music,
+  Dumbbell,
+  Star,
+  MapPin,
+  Pencil,
+  X,
+  Check,
+  Lock,
+  Unlock,
+  Calendar,
+  TrendingUp,
+} from "lucide-react";
 
 const ICON_MAP = {
   Home: <Home size={20} />,
@@ -27,17 +48,52 @@ const ICON_MAP = {
   Music: <Music size={20} />,
   Dumbbell: <Dumbbell size={20} />,
   Star: <Star size={20} />,
-  MapPin: <MapPin size={20} />
+  MapPin: <MapPin size={20} />,
 };
 
 const COLOR_PRESETS = [
-  { id: 'indigo', color: 'from-blue-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600' },
-  { id: 'rose', color: 'from-rose-500 to-pink-600', bg: 'bg-rose-50', text: 'text-rose-600' },
-  { id: 'emerald', color: 'from-emerald-400 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  { id: 'amber', color: 'from-amber-400 to-orange-600', bg: 'bg-amber-50', text: 'text-amber-600' },
-  { id: 'violet', color: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600' },
-  { id: 'cyan', color: 'from-cyan-400 to-blue-500', bg: 'bg-cyan-50', text: 'text-cyan-600' },
-  { id: 'slate', color: 'from-slate-600 to-slate-800', bg: 'bg-slate-100', text: 'text-slate-800' }
+  {
+    id: "indigo",
+    color: "from-blue-500 to-indigo-600",
+    bg: "bg-indigo-50",
+    text: "text-indigo-600",
+  },
+  {
+    id: "rose",
+    color: "from-rose-500 to-pink-600",
+    bg: "bg-rose-50",
+    text: "text-rose-600",
+  },
+  {
+    id: "emerald",
+    color: "from-emerald-400 to-teal-600",
+    bg: "bg-emerald-50",
+    text: "text-emerald-600",
+  },
+  {
+    id: "amber",
+    color: "from-amber-400 to-orange-600",
+    bg: "bg-amber-50",
+    text: "text-amber-600",
+  },
+  {
+    id: "violet",
+    color: "from-violet-500 to-purple-600",
+    bg: "bg-violet-50",
+    text: "text-violet-600",
+  },
+  {
+    id: "cyan",
+    color: "from-cyan-400 to-blue-500",
+    bg: "bg-cyan-50",
+    text: "text-cyan-600",
+  },
+  {
+    id: "slate",
+    color: "from-slate-600 to-slate-800",
+    bg: "bg-slate-100",
+    text: "text-slate-800",
+  },
 ];
 
 const SimulatorCard = ({ goal }) => {
@@ -48,32 +104,37 @@ const SimulatorCard = ({ goal }) => {
   if (!goal.avgMonthly || goal.avgMonthly <= 0) {
     return (
       <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 border border-slate-100 dark:border-slate-800 text-center">
-        <span className="text-[10px] font-bold text-slate-400">Comienza a ahorrar para activar el simulador</span>
+        <span className="text-[10px] font-bold text-slate-400">
+          Comienza a ahorrar para activar el simulador
+        </span>
       </div>
     );
   }
 
   const remaining = goal.target - goal.saved;
-  
+
   // If goal is already completed
   if (remaining <= 0) {
     return (
       <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl p-3 border border-emerald-200 dark:border-emerald-800 text-center">
-        <span className="text-[10px] font-bold text-emerald-600">🎉 ¡Meta completada!</span>
+        <span className="text-[10px] font-bold text-emerald-600">
+          🎉 ¡Meta completada!
+        </span>
       </div>
     );
   }
 
   const currentMonths = Math.ceil(remaining / goal.avgMonthly);
   const newMonthlyRate = goal.avgMonthly + extraSavings;
-  const simulatedMonths = newMonthlyRate > 0 ? Math.ceil(remaining / newMonthlyRate) : currentMonths;
+  const simulatedMonths =
+    newMonthlyRate > 0 ? Math.ceil(remaining / newMonthlyRate) : currentMonths;
   const diff = currentMonths - simulatedMonths;
 
   const getSimulatedDate = (months) => {
-    if (!months || months <= 0 || !isFinite(months)) return '---';
+    if (!months || months <= 0 || !isFinite(months)) return "---";
     const date = new Date();
     date.setMonth(date.getMonth() + months);
-    const monthName = date.toLocaleString('es-ES', { month: 'short' });
+    const monthName = date.toLocaleString("es-ES", { month: "short" });
     return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${date.getFullYear()}`;
   };
 
@@ -95,7 +156,11 @@ const SimulatorCard = ({ goal }) => {
               ¡{diff} meses antes!
             </span>
           )}
-          <span className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+          <span
+            className={`text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          >
+            ▼
+          </span>
         </div>
       </button>
 
@@ -110,7 +175,7 @@ const SimulatorCard = ({ goal }) => {
                 +S/ {extraSavings}
               </span>
             </div>
-            
+
             <input
               type="range"
               min="0"
@@ -120,7 +185,7 @@ const SimulatorCard = ({ goal }) => {
               onChange={(e) => setExtraSavings(Number(e.target.value))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
-            
+
             <div className="flex justify-between text-[9px] text-slate-400">
               <span>S/ 0</span>
               <span>S/ 500</span>
@@ -130,15 +195,27 @@ const SimulatorCard = ({ goal }) => {
 
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white dark:bg-slate-900/40 rounded-xl p-2 border border-slate-200 dark:border-slate-700">
-              <div className="text-[9px] font-bold text-slate-400 uppercase mb-1">Actual</div>
-              <div className="text-xs font-black text-slate-700 dark:text-slate-200">{getSimulatedDate(currentMonths)}</div>
-              <div className="text-[9px] text-slate-500">{currentMonths} meses</div>
+              <div className="text-[9px] font-bold text-slate-400 uppercase mb-1">
+                Actual
+              </div>
+              <div className="text-xs font-black text-slate-700 dark:text-slate-200">
+                {getSimulatedDate(currentMonths)}
+              </div>
+              <div className="text-[9px] text-slate-500">
+                {currentMonths} meses
+              </div>
             </div>
-            
+
             <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2 border border-emerald-200 dark:border-emerald-800">
-              <div className="text-[9px] font-bold text-emerald-600 uppercase mb-1">Con +S/ {extraSavings}</div>
-              <div className="text-xs font-black text-emerald-700 dark:text-emerald-400">{getSimulatedDate(simulatedMonths)}</div>
-              <div className="text-[9px] text-emerald-600">{simulatedMonths} meses</div>
+              <div className="text-[9px] font-bold text-emerald-600 uppercase mb-1">
+                Con +S/ {extraSavings}
+              </div>
+              <div className="text-xs font-black text-emerald-700 dark:text-emerald-400">
+                {getSimulatedDate(simulatedMonths)}
+              </div>
+              <div className="text-[9px] text-emerald-600">
+                {simulatedMonths} meses
+              </div>
             </div>
           </div>
         </div>
@@ -150,39 +227,52 @@ const SimulatorCard = ({ goal }) => {
 const GoalTracker = ({ stats }) => {
   const { updateGoalMetadata, addGoal, deleteGoal } = useFinance();
   const [editingGoal, setEditingGoal] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', icon: 'Target', target: '', isLocked: false, color: 'from-blue-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600', isShared: true });
-  
+  const [editForm, setEditForm] = useState({
+    name: "",
+    icon: "Target",
+    target: "",
+    isLocked: false,
+    color: "from-blue-500 to-indigo-600",
+    bg: "bg-indigo-50",
+    text: "text-indigo-600",
+    isShared: true,
+  });
+
   // Modal State
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
-    title: '',
-    message: '',
-    confirmText: '',
+    title: "",
+    message: "",
+    confirmText: "",
     onConfirm: () => {},
-    type: 'warning'
+    type: "warning",
   });
 
-  const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+  const closeConfirm = () =>
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
 
-  if (!stats) return <div className="p-8 text-center text-slate-400">Calculando metas...</div>;
-  
+  if (!stats)
+    return (
+      <div className="p-8 text-center text-slate-400">Calculando metas...</div>
+    );
+
   const handleEdit = (id, goal) => {
     if (goal.isLocked) return;
     setEditingGoal(id);
-    setEditForm({ 
-      name: goal.name || '', 
-      icon: goal.iconName || 'Target', 
-      target: goal.target || '', 
+    setEditForm({
+      name: goal.name || "",
+      icon: goal.iconName || "Target",
+      target: goal.target || "",
       isLocked: goal.isLocked || false,
-      color: goal.color || 'from-blue-500 to-indigo-600',
-      bg: goal.bg || 'bg-indigo-50',
-      text: goal.textColor || 'text-indigo-600',
-      isShared: goal.isShared !== false
+      color: goal.color || "from-blue-500 to-indigo-600",
+      bg: goal.bg || "bg-indigo-50",
+      text: goal.textColor || "text-indigo-600",
+      isShared: goal.isShared !== false,
     });
   };
 
   const saveEdit = () => {
-    if (editingGoal === 'new') {
+    if (editingGoal === "new") {
       addGoal(editForm);
     } else {
       updateGoalMetadata(editingGoal, editForm);
@@ -190,89 +280,86 @@ const GoalTracker = ({ stats }) => {
     setEditingGoal(null);
   };
 
-  const goals = Object.keys(stats).map(key => {
+  const goals = Object.keys(stats).map((key) => {
     const s = stats[key];
     return {
       id: key,
       ...s,
-      iconName: s.icon || 'Target',
-      icon: ICON_MAP[s.icon || 'Target']
+      iconName: s.icon || "Target",
+      icon: ICON_MAP[s.icon || "Target"],
     };
   });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      {goals.map(goal => {
-        const percentage = Math.min(Math.round((goal.saved / (goal.target || 1)) * 100), 100);
-        
+      {goals.map((goal) => {
+        const percentage = Math.min(
+          Math.round((goal.saved / (goal.target || 1)) * 100),
+          100,
+        );
+
         return (
-          <div key={goal.id} className="app-card p-6 overflow-hidden relative group">
+          <div
+            key={goal.id}
+            className="app-card p-6 overflow-hidden relative group"
+          >
             <div className="flex justify-between items-start mb-4 relative z-10">
               <div className="flex items-center space-x-3 min-w-0 flex-1 pr-2">
-                <button 
+                <button
                   onClick={() => !goal.isLocked && handleEdit(goal.id, goal)}
-                  className={`flex-shrink-0 p-3 rounded-2xl ${goal.bg} ${goal.textColor} dark:bg-slate-800 dark:text-slate-100 ${!goal.isLocked ? 'hover:scale-110 active:scale-95 transition-all shadow-sm ring-1 ring-slate-100 dark:ring-slate-700' : 'cursor-default opacity-80'}`}
+                  className={`flex-shrink-0 p-3 rounded-2xl ${goal.bg} ${goal.textColor} dark:bg-slate-800 dark:text-slate-100 ${!goal.isLocked ? "hover:scale-110 active:scale-95 transition-all shadow-sm ring-1 ring-slate-100 dark:ring-slate-700" : "cursor-default opacity-80"}`}
                 >
-                  {goal.isLocked ? <div className="relative">{goal.icon}</div> : goal.icon}
+                  {goal.isLocked ? (
+                    <div className="relative">{goal.icon}</div>
+                  ) : (
+                    goal.icon
+                  )}
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{goal.name}</h3>
-                    {!goal.isLocked ? (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                        <button onClick={() => handleEdit(goal.id, goal)} className="p-1.5 text-slate-300 hover:text-indigo-500 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-lg backdrop-blur-sm transition-all mr-1 shadow-sm">
-                          <Pencil size={12} />
-                        </button>
-                        <button onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
-                            title: 'Eliminar Meta',
-                            message: `¿Estás seguro de eliminar "${goal.name}" permanentemente?`,
-                            confirmText: 'Sí, eliminar',
-                            type: 'danger',
-                            onConfirm: () => {
-                              deleteGoal(goal.id);
-                              closeConfirm();
-                            }
-                          });
-                        }} className="p-1.5 text-slate-300 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg backdrop-blur-sm transition-all shadow-sm">
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
+                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                      {goal.name}
+                    </h3>
+                    {goal.isLocked && (
+                      <button
                         onClick={() => {
                           setConfirmConfig({
                             isOpen: true,
-                            title: 'Desbloquear Meta',
+                            title: "Desbloquear Meta",
                             message: `¿Quieres desbloquear "${goal.name}" para poder editar su nombre, icono o monto?`,
-                            confirmText: 'Sí, desbloquear',
-                            type: 'info',
+                            confirmText: "Sí, desbloquear",
+                            type: "info",
                             onConfirm: () => {
                               updateGoalMetadata(goal.id, { isLocked: false });
-                            }
+                            },
                           });
                         }}
-                        className="p-1 text-slate-300 hover:text-indigo-500 transition-colors active:scale-95"
+                        className="p-1 text-slate-300 hover:text-indigo-500 transition-colors active:scale-95 ml-2"
                       >
                         <Lock size={12} className="text-indigo-400" />
                       </button>
                     )}
                   </div>
                   <div className="flex items-baseline space-x-1 flex-wrap">
-                    <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate max-w-full">{formatCompactCurrency(goal.saved)}</span>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap">/ {formatCompactCurrency(goal.target)}</span>
+                    <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate max-w-full">
+                      {formatCompactCurrency(goal.saved)}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                      / {formatCompactCurrency(goal.target)}
+                    </span>
                   </div>
                 </div>
               </div>
-              <div className={`px-4 py-2 rounded-2xl ${goal.bg} ${goal.textColor} font-black text-xl dark:bg-slate-800 dark:text-white`}>
+              <div
+                className={`px-4 py-2 rounded-2xl ${goal.bg} ${goal.textColor} font-black text-xl dark:bg-slate-800 dark:text-white`}
+              >
                 {percentage}%
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative z-10">
-              <div 
+              <div
                 className={`h-full bg-gradient-to-r ${goal.color} transition-all duration-1000 ease-out`}
                 style={{ width: `${percentage}%` }}
               >
@@ -281,56 +368,81 @@ const GoalTracker = ({ stats }) => {
             </div>
 
             <div className="mt-5 pt-5 border-t border-slate-50 dark:border-slate-800/50">
-                <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
-                        <Calendar size={12} className="mr-1" /> Proyección
-                    </span>
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                        {goal.avgMonthly > 0 ? (() => {
-                            const remaining = goal.target - goal.saved;
-                            const months = Math.ceil(remaining / goal.avgMonthly);
-                            if (months <= 0) return '¡Meta completada!';
-                            const date = new Date();
-                            date.setMonth(date.getMonth() + months);
-                            const monthName = date.toLocaleString('es-ES', { month: 'long' });
-                            return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${date.getFullYear()}`;
-                        })() : 'Sin aportes suficientes'}
-                    </span>
-                </div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
+                  <Calendar size={12} className="mr-1" /> Proyección
+                </span>
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  {goal.avgMonthly > 0
+                    ? (() => {
+                        const remaining = goal.target - goal.saved;
+                        const months = Math.ceil(remaining / goal.avgMonthly);
+                        if (months <= 0) return "¡Meta completada!";
+                        const date = new Date();
+                        date.setMonth(date.getMonth() + months);
+                        const monthName = date.toLocaleString("es-ES", {
+                          month: "long",
+                        });
+                        return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${date.getFullYear()}`;
+                      })()
+                    : "Sin aportes suficientes"}
+                </span>
+              </div>
 
-                <SimulatorCard goal={goal} />
+              <SimulatorCard goal={goal} />
             </div>
 
             {/* Subtle BG Graphic */}
-            <div className={`absolute -right-4 -bottom-4 opacity-10 ${goal.textColor}`}>
-                {React.cloneElement(goal.icon, { size: 120 })}
+            <div
+              className={`absolute -right-4 -bottom-4 opacity-10 ${goal.textColor}`}
+            >
+              {React.cloneElement(goal.icon, { size: 120 })}
             </div>
           </div>
         );
       })}
 
       {/* Add New Goal Card */}
-      <div 
+      <div
         onClick={() => {
-          setEditingGoal('new');
-          setEditForm({ name: '', icon: 'Target', target: '', isLocked: false, color: 'from-blue-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600', isShared: true });
+          setEditingGoal("new");
+          setEditForm({
+            name: "",
+            icon: "Target",
+            target: "",
+            isLocked: false,
+            color: "from-blue-500 to-indigo-600",
+            bg: "bg-indigo-50",
+            text: "text-indigo-600",
+            isShared: true,
+          });
         }}
         className="app-card overflow-hidden p-6 min-h-[16rem] flex flex-col items-center justify-center opacity-70 hover:opacity-100 transition-all cursor-pointer border-2 border-dashed border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
       >
         <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4 transition-transform hover:scale-110">
           <Target size={24} />
         </div>
-        <span className="text-sm font-black text-slate-500 uppercase tracking-widest text-center mt-2">Crear Nueva Meta</span>
+        <span className="text-sm font-black text-slate-500 uppercase tracking-widest text-center mt-2">
+          Crear Nueva Meta
+        </span>
       </div>
 
       {/* Edit Modal */}
       {editingGoal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingGoal(null)}></div>
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setEditingGoal(null)}
+          ></div>
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative z-10 animate-fade-in-up border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Personalizar Meta</h2>
-              <button onClick={() => setEditingGoal(null)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400">
+              <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                Personalizar Meta
+              </h2>
+              <button
+                onClick={() => setEditingGoal(null)}
+                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -338,21 +450,29 @@ const GoalTracker = ({ stats }) => {
             <div className="space-y-6">
               <div className="flex space-x-4">
                 <div className="flex-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Nombre</label>
-                  <input 
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">
+                    Nombre
+                  </label>
+                  <input
                     type="text"
                     value={editForm.name}
-                    onChange={e => setEditForm({...editForm, name: e.target.value})}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, name: e.target.value })
+                    }
                     className="w-full glass-input p-4 text-xs font-bold"
                     placeholder="Ej: Mi primera casa"
                   />
                 </div>
                 <div className="w-32">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Monto Meta</label>
-                  <input 
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">
+                    Monto Meta
+                  </label>
+                  <input
                     type="number"
                     value={editForm.target}
-                    onChange={e => setEditForm({...editForm, target: e.target.value})}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, target: e.target.value })
+                    }
                     className="w-full glass-input p-4 text-xs font-bold"
                   />
                 </div>
@@ -361,26 +481,46 @@ const GoalTracker = ({ stats }) => {
               {/* Shared Toggle */}
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <div className="flex flex-col">
-                  <span className="text-sm font-black text-slate-700 dark:text-slate-200">Ahorro Compartido</span>
-                  <span className="text-[10px] text-slate-400 font-bold leading-tight mt-1">Si se desactiva, tu pareja no podrá aportar dinero a esta meta.</span>
+                  <span className="text-sm font-black text-slate-700 dark:text-slate-200">
+                    Ahorro Compartido
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold leading-tight mt-1">
+                    Si se desactiva, tu pareja no podrá aportar dinero a esta
+                    meta.
+                  </span>
                 </div>
                 <button
-                  onClick={() => setEditForm({...editForm, isShared: !editForm.isShared})}
-                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${editForm.isShared ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                  onClick={() =>
+                    setEditForm({ ...editForm, isShared: !editForm.isShared })
+                  }
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${editForm.isShared ? "bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
                 >
-                  <div className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform ${editForm.isShared ? 'translate-x-6' : 'translate-x-0'}`} />
+                  <div
+                    className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform ${editForm.isShared ? "translate-x-6" : "translate-x-0"}`}
+                  />
                 </button>
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Tema de Color</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">
+                  Tema de Color
+                </label>
                 <div className="flex flex-wrap gap-2 px-1">
-                  {COLOR_PRESETS.map(preset => (
+                  {COLOR_PRESETS.map((preset) => (
                     <button
                       key={preset.id}
-                      onClick={() => setEditForm({...editForm, color: preset.color, bg: preset.bg, text: preset.text})}
+                      onClick={() =>
+                        setEditForm({
+                          ...editForm,
+                          color: preset.color,
+                          bg: preset.bg,
+                          text: preset.text,
+                        })
+                      }
                       className={`w-8 h-8 rounded-full bg-gradient-to-r ${preset.color} transition-all ring-offset-2 dark:ring-offset-slate-900 ${
-                        editForm.color === preset.color ? 'ring-2 ring-indigo-500 scale-110' : 'opacity-60 hover:opacity-100'
+                        editForm.color === preset.color
+                          ? "ring-2 ring-indigo-500 scale-110"
+                          : "opacity-60 hover:opacity-100"
                       }`}
                     />
                   ))}
@@ -390,23 +530,31 @@ const GoalTracker = ({ stats }) => {
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1 flex justify-between">
                   <span>Icono Representativo</span>
-                  <button 
-                    onClick={() => setEditForm({...editForm, isLocked: !editForm.isLocked})}
-                    className={`flex items-center space-x-1 transition-colors ${editForm.isLocked ? 'text-indigo-600' : 'text-slate-300'}`}
+                  <button
+                    onClick={() =>
+                      setEditForm({ ...editForm, isLocked: !editForm.isLocked })
+                    }
+                    className={`flex items-center space-x-1 transition-colors ${editForm.isLocked ? "text-indigo-600" : "text-slate-300"}`}
                   >
-                    {editForm.isLocked ? <Lock size={10} /> : <Unlock size={10} />}
-                    <span className="text-[8px] font-black">{editForm.isLocked ? 'FIJADO' : 'LIBRE'}</span>
+                    {editForm.isLocked ? (
+                      <Lock size={10} />
+                    ) : (
+                      <Unlock size={10} />
+                    )}
+                    <span className="text-[8px] font-black">
+                      {editForm.isLocked ? "FIJADO" : "LIBRE"}
+                    </span>
                   </button>
                 </label>
                 <div className="grid grid-cols-5 gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-3xl max-h-48 overflow-y-auto no-scrollbar border border-slate-100 dark:border-slate-700/50">
                   {Object.entries(ICON_MAP).map(([name, icon]) => (
                     <button
                       key={name}
-                      onClick={() => setEditForm({...editForm, icon: name})}
+                      onClick={() => setEditForm({ ...editForm, icon: name })}
                       className={`aspect-square flex items-center justify-center rounded-2xl transition-all ${
-                        editForm.icon === name 
-                        ? 'bg-indigo-600 text-white shadow-lg scale-110' 
-                        : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-500 border border-slate-100 dark:border-slate-700'
+                        editForm.icon === name
+                          ? "bg-indigo-600 text-white shadow-lg scale-110"
+                          : "bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-500 border border-slate-100 dark:border-slate-700"
                       }`}
                     >
                       {React.cloneElement(icon, { size: 18 })}
@@ -415,20 +563,45 @@ const GoalTracker = ({ stats }) => {
                 </div>
               </div>
 
-              <button 
-                onClick={saveEdit}
-                className="w-full py-4 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 active:scale-95 transition-all text-sm flex items-center justify-center space-x-2"
-              >
-                <Check size={18} />
-                <span>Guardar Cambios</span>
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={saveEdit}
+                  className="w-full py-4 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 active:scale-95 transition-all text-sm flex items-center justify-center space-x-2"
+                >
+                  <Check size={18} />
+                  <span>Guardar Cambios</span>
+                </button>
+
+                {editingGoal !== "new" && (
+                  <button
+                    onClick={() => {
+                      setConfirmConfig({
+                        isOpen: true,
+                        title: "Eliminar Meta",
+                        message: `¿Estás seguro de eliminar "${editForm.name}" permanentemente?`,
+                        confirmText: "Sí, eliminar",
+                        type: "danger",
+                        onConfirm: () => {
+                          deleteGoal(editingGoal);
+                          closeConfirm();
+                          setEditingGoal(null);
+                        },
+                      });
+                    }}
+                    className="w-full py-4 bg-transparent border-2 border-rose-100 dark:border-rose-900/30 text-rose-500 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all text-sm flex items-center justify-center space-x-2 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  >
+                    <X size={18} />
+                    <span>Eliminar Meta</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Global Confirm Modal */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={closeConfirm}
         onConfirm={confirmConfig.onConfirm}

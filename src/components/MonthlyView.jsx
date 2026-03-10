@@ -60,8 +60,9 @@ const AccountSelector = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedAccount = accounts.find((a) => a.id === value) || accounts[0];
-  const Icon =
-    selectedAccount?.id === "cash"
+  const Icon = selectedAccount?.type === 'vault' 
+    ? PiggyBank
+    : selectedAccount?.id === "cash"
       ? Banknote
       : selectedAccount?.id?.includes("bank")
         ? Wallet
@@ -1006,28 +1007,55 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                                   "userPaid",
                                   parseFloat(e.target.value) || 0,
                                   payments.date,
-                                  payments.userAccountId || "bank"
+                                  payments.userAccountId || "bank",
+                                  payments.userDestAccountId || ""
                                 )
                               }
                               className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.userPaid >= userGoal ? "text-emerald-600" : "text-slate-600"}`}
                             />
                           </div>
-                          <AccountSelector
-                            value={payments.userAccountId || "bank"}
-                            onChange={(val) => {
-                              updateSavingsPayment(
-                                currentMonthIndex,
-                                type,
-                                "userPaid",
-                                payments.userPaid || 0,
-                                payments.date,
-                                val
-                              );
-                              showToast(`Origen: ${accounts.find(a => a.id === val)?.name}`, 'info');
-                            }}
-                            accounts={accounts}
-                            size="xs"
-                          />
+                          <div className="flex flex-col space-y-2 mt-3 p-2 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div className="flex flex-col space-y-1" title="Cuenta origen">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">Extraer de:</span>
+                              <AccountSelector
+                                value={payments.userAccountId || "bank"}
+                                onChange={(val) => {
+                                  updateSavingsPayment(
+                                    currentMonthIndex,
+                                    type,
+                                    "userPaid",
+                                    payments.userPaid || 0,
+                                    payments.date,
+                                    val,
+                                    payments.userDestAccountId || ""
+                                  );
+                                  showToast(`Origen: ${accounts.find(a => a.id === val)?.name}`, 'info');
+                                }}
+                                accounts={accounts.filter(a => a.type !== 'vault')}
+                                size="xs"
+                              />
+                            </div>
+                            <div className="flex flex-col space-y-1" title="Bóveda destino">
+                              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-wider ml-1">Guardar en bóveda:</span>
+                              <AccountSelector
+                                value={payments.userDestAccountId || ""}
+                                onChange={(val) => {
+                                  updateSavingsPayment(
+                                    currentMonthIndex,
+                                    type,
+                                    "userPaid",
+                                    payments.userPaid || 0,
+                                    payments.date,
+                                    payments.userAccountId || "bank",
+                                    val
+                                  );
+                                  showToast(`Destino: ${accounts.find(a => a.id === val)?.name}`, 'info');
+                                }}
+                                accounts={accounts.filter(a => a.type === 'vault')}
+                                size="xs"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -1120,28 +1148,38 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
                                   "partnerPaid",
                                   parseFloat(e.target.value) || 0,
                                   payments.date,
-                                  payments.partnerAccountId || "bank"
+                                  payments.partnerAccountId || "bank",
+                                  payments.partnerDestAccountId || ""
                                 )
                               }
                               className={`w-full bg-transparent font-mono font-bold text-sm focus:outline-none ${payments.partnerPaid >= partnerGoal ? "text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}
                             />
                           </div>
-                          <AccountSelector
-                            value={payments.partnerAccountId || "bank"}
-                            onChange={(val) => {
-                              updateSavingsPayment(
-                                currentMonthIndex,
-                                type,
-                                "partnerPaid",
-                                payments.partnerPaid || 0,
-                                payments.date,
-                                val
-                              );
-                              showToast(`Origen: ${accounts.find(a => a.id === val)?.name}`, 'info');
-                            }}
-                            accounts={accounts}
-                            size="xs"
-                          />
+                          <div className="flex flex-col space-y-2 mt-3 p-2 bg-rose-50/30 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-900/30">
+                            <div className="flex-1 hidden" title="Cuenta origen (pareja)">
+                               {/* Partner's source account isn't typically tracked in the user's balances, but we keep the selector hidden or just use default */}
+                            </div>
+                            <div className="flex flex-col space-y-1" title="Bóveda destino">
+                              <span className="text-[9px] font-black text-rose-400 uppercase tracking-wider ml-1">Guardar en bóveda:</span>
+                              <AccountSelector
+                                value={payments.partnerDestAccountId || payments.userDestAccountId || ""}
+                                onChange={(val) => {
+                                  updateSavingsPayment(
+                                    currentMonthIndex,
+                                    type,
+                                    "partnerPaid",
+                                    payments.partnerPaid || 0,
+                                    payments.date,
+                                    payments.partnerAccountId || "bank",
+                                    val
+                                  );
+                                  showToast(`Destino: ${accounts.find(a => a.id === val)?.name}`, 'info');
+                                }}
+                                accounts={accounts.filter(a => a.type === 'vault')}
+                                size="xs"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                       )}

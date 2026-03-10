@@ -61,7 +61,10 @@ const OnboardingModal = ({ isOpen, onComplete, userId, isGuest = false }) => {
       onComplete({ name, currency });
     } catch (error) {
       console.error("Onboarding error:", error);
-      if (!isGuest) alert("Error al guardar tu perfil. Inténtalo de nuevo.");
+      if (!isGuest) {
+        const errorMsg = error.message === 'User not found' ? 'Sesión expirada o inválida. Por favor, intenta iniciar sesión de nuevo.' : error.message;
+        alert(`Error al guardar tu perfil: ${errorMsg}`);
+      }
     } finally {
       setLoading(false);
     }

@@ -19,8 +19,8 @@ export const INCOME_BONUS = 0; // Extra for July and December
 export const FIXED_EXPENSES_BASE = [];
 
 export const SAVINGS_GOALS = {
-  depa: { name: "Departamento", monthly: 0, total: 19200 },
-  boda: { name: "Boda", monthly: 0, total: 9600 },
+  goal1: { name: "Meta 1", monthly: 0, total: 0 },
+  goal2: { name: "Meta 2", monthly: 0, total: 0 },
 };
 
 export const EXPENSE_CATEGORIES = [

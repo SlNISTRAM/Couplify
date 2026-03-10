@@ -123,7 +123,7 @@ const EncargosSection = ({ currentMonthIndex, encargos = [], stats }) => {
             <div className="space-y-2">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">¿En qué cuenta entró?</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {accounts.map(acc => {
+                {accounts.filter(a => a.type !== 'credit').map(acc => {
                   const isSelected = form.accountId === acc.id;
                   const Icon = acc.id === 'cash' ? Banknote : acc.id === 'bank' ? Wallet : CreditCard;
                   

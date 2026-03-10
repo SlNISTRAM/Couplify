@@ -6,7 +6,7 @@ const DateTimeSelector = ({ value, onChange, color = 'indigo', size = 'md', show
   const [currentDate, setCurrentDate] = useState(value ? new Date(value) : new Date());
   
   // Color configuration
-  const theme = {
+  const themeMap = {
     indigo: {
       bg: 'bg-indigo-50 dark:bg-indigo-900/20',
       text: 'text-indigo-600 dark:text-indigo-400',
@@ -27,8 +27,16 @@ const DateTimeSelector = ({ value, onChange, color = 'indigo', size = 'md', show
       border: 'border-emerald-100 dark:border-emerald-900/40',
       active: 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20',
       ring: 'ring-emerald-500'
+    },
+    amber: {
+      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      text: 'text-amber-600 dark:text-amber-400',
+      border: 'border-amber-100 dark:border-amber-900/40',
+      active: 'bg-amber-600 text-white shadow-lg shadow-amber-600/20',
+      ring: 'ring-amber-500'
     }
-  }[color] || theme.indigo;
+  };
+  const theme = themeMap[color] || themeMap.indigo;
 
   const isToday = (d) => {
     const today = new Date();

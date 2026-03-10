@@ -161,7 +161,7 @@ export const useData2026 = (userId, isGuest = false) => {
           setSaveStatus('saved');
         }
       } catch (err) {
-        console.error("Failed to save data:", err);
+        console.error(`[DataSync] Failed to save data for user ${userId || 'Guest'}:`, err);
         setSaveStatus('error');
       }
     };

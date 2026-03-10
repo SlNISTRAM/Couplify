@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, ChevronDown, Moon, Sun, User, Menu, X as CloseIcon } from 'lucide-react';
+import { LayoutDashboard, Calendar, ChevronDown, Moon, Sun, User, Menu, X as CloseIcon, CloudDrizzle, Cloud, CloudOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useFinance } from '../hooks/useFinance';
 import { useTheme } from '../context/ThemeContext';
@@ -10,7 +10,7 @@ import { Plus } from 'lucide-react';
 const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChange, selectedYear, onYearChange, onEditProfile }) => { // Logo updated
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
-  const { getAvailableYears, getMonthsByYear } = useFinance();
+  const { getAvailableYears, getMonthsByYear, saveStatus } = useFinance();
   const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === 'dark';
   const years = getAvailableYears();
@@ -44,13 +44,40 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
   // We map over the ACTUAL months available in this year data, not just static 12 names
   // This handles 2028 having only 3 months.
 
+  const SyncIndicator = () => {
+    if (saveStatus === 'saving') {
+      return (
+        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50">
+          <CloudDrizzle size={12} className="animate-pulse" />
+          <span className="text-[9px] font-black uppercase tracking-widest">Guardando...</span>
+        </div>
+      );
+    }
+    if (saveStatus === 'error') {
+      return (
+        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50">
+          <CloudOff size={12} />
+          <span className="text-[9px] font-black uppercase tracking-widest">Error de Sinc.</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
+        <Cloud size={12} />
+        <span className="text-[9px] font-black uppercase tracking-widest">Sincronizado</span>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg dark:bg-[#0f172a] text-slate-600 dark:text-slate-300">
       {/* Desktop Sidebar - Premium Glassmorphism */}
       <aside className="fixed left-6 top-6 bottom-6 w-72 bg-white dark:bg-[#1e293b] rounded-[2.5rem] shadow-2xl border border-white/40 dark:border-slate-700/50 hidden lg:flex flex-col p-8 z-40 transition-all">
-        <div className="mb-8 flex-shrink-0">
+        <div className="mb-6 flex-shrink-0">
           <Logo />
-          <div className="h-1 w-12 bg-indigo-500 rounded-full mt-2"></div>
+          <div className="mt-4">
+            <SyncIndicator />
+          </div>
         </div>
 
         {/* Scrollable Container for Nav and Controls */}
@@ -273,6 +300,9 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
                       {currentView === 'dashboard' ? selectedYear : `Detalle ${selectedYear}`}
                    </p>
                </div>
+            </div>
+            <div className="flex-shrink-0">
+              <SyncIndicator />
             </div>
          </div>
          
