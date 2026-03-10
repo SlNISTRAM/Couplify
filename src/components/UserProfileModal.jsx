@@ -19,7 +19,7 @@ const UserProfileModal = ({ isOpen, onClose, initialName = '', onNameUpdated, on
         setError(null);
 
         try {
-            const { data, error: updateError } = await supabase.auth.updateUser({
+            const { error: updateError } = await supabase.auth.updateUser({
                 data: { display_name: name.trim() }
             });
 

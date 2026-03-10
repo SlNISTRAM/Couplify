@@ -168,7 +168,7 @@ export const useData2026 = (userId, isGuest = false) => {
 
     const timeoutId = setTimeout(saveData, 1000); // 1s debounce
     return () => clearTimeout(timeoutId);
-  }, [data, userId, isGuest, loading]);
+  }, [data, userId, isGuest, loading, error]);
 
   // 3. Prevent data loss on close
   useEffect(() => {

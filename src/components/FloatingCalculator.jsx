@@ -24,12 +24,11 @@ const FloatingCalculator = () => {
 
     const calculate = useCallback(() => {
         try {
-            // eslint-disable-next-line no-eval
             const result = eval(equation + display);
             setDisplay(String(Number(result.toFixed(2))));
             setEquation('');
             setShouldReset(true);
-        } catch (e) {
+        } catch {
             setDisplay('Error');
             setEquation('');
         }

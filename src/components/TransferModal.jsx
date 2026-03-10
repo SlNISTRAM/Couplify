@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ArrowRightLeft, Send, Wallet, Banknote, CreditCard, Save, AlertTriangle } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useContexts';
 import { formatCurrency } from '../utils/helpers';
 
 const TransferModal = ({ isOpen, onClose, currentMonthIndex, accountBalances }) => {
@@ -17,8 +17,6 @@ const TransferModal = ({ isOpen, onClose, currentMonthIndex, accountBalances }) 
 
   if (!isOpen) return null;
 
-  const debitAccounts = accounts.filter(acc => acc.type !== 'credit');
-  
   const handleTransfer = (e) => {
     e.preventDefault();
     const amount = parseFloat(transfer.amount);
@@ -39,12 +37,6 @@ const TransferModal = ({ isOpen, onClose, currentMonthIndex, accountBalances }) 
     // Prevent overpaying a credit card
     if (toAcc.type === 'credit') {
       const currentDebt = accountBalances[toAcc.id]?.balance || 0;
-      // In this app debit/cash is positive balance, credit card debt might be stored depending on usage.
-      // Usually, if you have a debt, the balance might be negative or positive depending on implementation.
-      // Assuming 'balance' is the amount owed (or negative if owed). Let's check how it's structured.
-      // Wait, let's look at useFinance.js: credit cards have a limit and balance.
-      // When spent, balance decreases (goes negative).
-      // So debt is Math.abs(currentDebt) if currentDebt < 0.
       if (currentDebt >= 0) {
         showToast(`La tarjeta ${toAcc.name} no tiene deuda pendiente.`, 'error');
         return;

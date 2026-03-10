@@ -1,7 +1,7 @@
 import { LayoutDashboard, Calendar, ChevronDown, Moon, Sun, User, Menu, X as CloseIcon, CloudDrizzle, Cloud, CloudOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useFinance } from '../hooks/useFinance';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../hooks/useContexts';
 import FloatingCalculator from './FloatingCalculator';
 import QuickExpenseModal from './QuickExpenseModal';
 import Logo from './Logo';

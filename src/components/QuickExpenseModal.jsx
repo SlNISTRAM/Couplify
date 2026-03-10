@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Utensils, Gamepad2, Heart, Shirt, Package, Calculator, Car, Home, Tv, PartyPopper, Stethoscope, Banknote, CreditCard, Wallet } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useContexts';
 import { EXPENSE_CATEGORIES } from '../utils/constants';
 import DateTimeSelector from './DateTimeSelector';
 

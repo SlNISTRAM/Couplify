@@ -14,7 +14,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { useFinance } from '../hooks/useFinance';
 
-const OnboardingModal = ({ isOpen, onClose, onComplete, isGuest = false }) => {
+const OnboardingModal = ({ isOpen, onComplete, isGuest = false }) => {
   const { setupInitialAccounts } = useFinance();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ const OnboardingModal = ({ isOpen, onClose, onComplete, isGuest = false }) => {
       };
 
       // 3. Save to Finance Data
-      setupInitialAccounts(accountSettings);
+      setupInitialAccounts(accountSettings, currency);
 
       // 4. Complete
       onComplete({ name, currency });
@@ -80,7 +80,7 @@ const OnboardingModal = ({ isOpen, onClose, onComplete, isGuest = false }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 overflow-y-auto bg-slate-950/40 backdrop-blur-xl">
-      <div className="relative w-full max-w-lg min-h-screen md:min-h-0 bg-white dark:bg-[#1e293b] md:rounded-[3rem] shadow-2xl border-white/20 flex flex-col animate-scale-in">
+      <div className="relative w-full max-w-lg min-h-screen md:min-h-0 bg-white dark:bg-[#1e293b] md:rounded-[3rem] shadow-2xl border-white/20 flex flex-col animate-scale-in overflow-hidden">
         <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col">
           {/* Header Controls */}
           <div className="absolute top-6 left-8 right-8 flex justify-between items-center z-10">

@@ -8,9 +8,9 @@ import OnboardingModal from './components/OnboardingModal';
 import UpdatePasswordModal from './components/UpdatePasswordModal';
 import { supabase } from './lib/supabase';
 
-import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { FinanceProvider } from './context/FinanceContext';
+import { ToastProvider } from './context/ToastProvider';
+import { ThemeProvider } from './context/ThemeProvider';
+import { FinanceProvider } from './context/FinanceProvider';
 
 import ErrorBoundary from './components/ErrorBoundary';
 

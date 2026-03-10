@@ -21,17 +21,19 @@ const COLORS = [
 
 const DonutChart = ({ data, total }) => {
     // Simple SVG Donut logic
+    const segments = [];
     let currentCumulative = 0;
-    const segments = data.map((item, index) => {
+    
+    data.forEach((item, index) => {
         const percent = (item.value / total) * 100;
         const startPercent = currentCumulative;
-        currentCumulative += percent;
+        const endPercent = currentCumulative + percent;
         
         // Convert percentage to circle coordinates
         const x1 = Math.cos(2 * Math.PI * (startPercent / 100));
         const y1 = Math.sin(2 * Math.PI * (startPercent / 100));
-        const x2 = Math.cos(2 * Math.PI * (currentCumulative / 100));
-        const y2 = Math.sin(2 * Math.PI * (currentCumulative / 100));
+        const x2 = Math.cos(2 * Math.PI * (endPercent / 100));
+        const y2 = Math.sin(2 * Math.PI * (endPercent / 100));
         
         const largeArcFlag = percent > 50 ? 1 : 0;
         
@@ -42,13 +44,15 @@ const DonutChart = ({ data, total }) => {
             `L 0 0`,
         ].join(' ');
 
-        return {
+        segments.push({
             path: pathData,
             color: COLORS[index % COLORS.length],
             name: item.name,
             value: item.value,
             percent: percent.toFixed(1)
-        };
+        });
+
+        currentCumulative = endPercent;
     });
 
     return (
@@ -143,7 +147,7 @@ const AreaChartTrend = ({ data }) => {
                     const x = (i / (data.length - 1)) * (width - 2 * paddingX) + paddingX;
                     return (
                         <text key={i} x={x} y={height + 5} textAnchor="middle" className="text-[9px] fill-slate-400 dark:fill-slate-300 font-black uppercase tracking-tighter">
-                            {d.name.substring(0, 3)}
+                            {d.name?.substring(0, 3) || '???'}
                         </text>
                     );
                 })}

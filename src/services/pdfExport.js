@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCurrency } from '../utils/helpers';
 
-export const generateFinancialReport = (userName, selectedYear, yearData, globalSavings, yearDistribution, monthlyTrend) => {
+export const generateFinancialReport = (userName, selectedYear, yearData, globalSavings, yearDistribution) => {
   console.log('🔍 generateFinancialReport called');
   console.log('Parameters:', { userName, selectedYear, yearDataLength: yearData?.length, globalSavings, yearDistribution });
   
@@ -311,6 +311,6 @@ export const generateFinancialReport = (userName, selectedYear, yearData, global
 };
 
 // Keep the old function for backward compatibility if needed elsewhere
-export const exportToPdf = async (elementId, filename = 'reporte-finanzas.pdf') => {
+export const exportToPdf = async () => {
   console.warn('exportToPdf is deprecated. Use generateFinancialReport instead.');
 };

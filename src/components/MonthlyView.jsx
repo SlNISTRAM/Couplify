@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useFinance } from "../hooks/useFinance";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useContexts";
 import {
   formatCurrency,
   formatCompactCurrency,
@@ -878,8 +878,7 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
 
             <div className="app-card p-6 space-y-6">
               {Object.entries(monthData.goalMetadata || {
-                depa: { name: "Departamento", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isShared: true },
-                boda: { name: "Boda", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isShared: true }
+                goal1: { name: "Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 0, isLocked: false }
               }).map(([type, goalMeta]) => {
                 const userGoal = Number(monthData.savings?.[type] || 0);
                 // Partner goal defaults to user goal (legacy compatibility)

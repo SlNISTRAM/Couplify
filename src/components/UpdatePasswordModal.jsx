@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Lock, Save, X, ShieldCheck } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useContexts';
 
 const UpdatePasswordModal = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');

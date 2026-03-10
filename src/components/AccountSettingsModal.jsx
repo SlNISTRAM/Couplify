@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Save, Banknote, CreditCard, Wallet, AlertTriangle, Pencil, ChevronUp, ChevronDown, Eye, EyeOff, PiggyBank } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useContexts';
 import { ACCOUNTS } from '../utils/constants';
 
 const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMonthIndex }) => {
-  const { monthsData, updateAccountSettings, accounts, addAccount, deleteAccount, updateAccount, reorderAccount, updateAccountAdjustment, resetMonthCarryover, calculateMonthStats } = useFinance();
+  const { monthsData, updateAccountSettings, accounts, addAccount, deleteAccount, updateAccount, reorderAccount, updateAccountAdjustment, resetMonthCarryover } = useFinance();
   const { showToast } = useToast();
   
   const currentSettings = monthsData[0]?.accountSettings || {};
@@ -15,31 +15,26 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [newAcc, setNewAcc] = useState({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '' });
 
-  useEffect(() => {
+  // Pattern: Adjust state during render to avoid useEffect set-state-in-effect
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
-      setSettings(prev => {
-        const initial = { ...prev };
-        let changed = false;
-        
-        accounts.forEach(acc => {
-          if (!initial[acc.id]) {
-            initial[acc.id] = {
-              name: acc.name,
-              initialBalance: currentSettings[acc.id]?.initialBalance || 0,
-              limit: currentSettings[acc.id]?.limit || 0,
-              dueDate: acc.dueDate || ''
-            };
-            changed = true;
-          }
-        });
-
-        return changed || Object.keys(prev).length === 0 ? initial : prev;
+      const initial = {};
+      accounts.forEach(acc => {
+        initial[acc.id] = {
+          name: acc.name,
+          initialBalance: currentSettings[acc.id]?.initialBalance || 0,
+          limit: currentSettings[acc.id]?.limit || 0,
+          dueDate: acc.dueDate || ''
+        };
       });
+      setSettings(initial);
     } else {
       setSettings({});
       setSyncValues({});
     }
-  }, [isOpen, accounts, currentSettings]);
+  }
 
   if (!isOpen) return null;
 
@@ -72,10 +67,6 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
           realBalance = -Math.abs(realBalance);
         }
 
-        // Compute ABSOLUTE adjustment:
-        // Remove the existing stale adjustment from calculatedBalance to get the base
-        // (what the app would show purely from income/expenses, no adjustments).
-        // Then set the adjustment to exactly bridge that base to the real balance.
         const existingAdjustment = Number(monthsData[currentMonthIndex]?.accountAdjustments?.[id]) || 0;
         const calculatedBalance = accountBalances[id]?.balance || 0;
         const baseBalance = calculatedBalance - existingAdjustment;
@@ -169,7 +160,6 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                 <div className="flex justify-between items-center mb-2 px-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre de la Cuenta</label>
                   <div className="flex items-center space-x-2">
-                    {/* Reorder Controls */}
                     <div className="flex flex-col -space-y-1">
                       <button 
                         onClick={() => reorderAccount(acc.id, 'up')}
@@ -325,19 +315,15 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                                ? 'bg-emerald-100 text-emerald-600' 
                                : 'bg-rose-100 text-rose-600'
                            }`}>
-                                Ajuste: { (acc.type === 'credit' ? (-Math.abs(parseFloat(syncValues[acc.id])) - (accountBalances[acc.id]?.balance || 0)) : (parseFloat(syncValues[acc.id]) - (accountBalances[acc.id]?.balance || 0))).toFixed(2)}
+                                Adjustment: { (acc.type === 'credit' ? (-Math.abs(parseFloat(syncValues[acc.id])) - (accountBalances[acc.id]?.balance || 0)) : (parseFloat(syncValues[acc.id]) - (accountBalances[acc.id]?.balance || 0))).toFixed(2)}
                            </div>
                         </div>
                     )}
                   </div>
-                  <p className="text-[8px] text-slate-400 mt-2 italic leading-tight">
-                    * Esto cuadrará tu {acc.type === 'credit' ? 'deuda' : 'saldo'} con la realidad del banco.
-                  </p>
                 </div>
               </div>
             ))}
 
-            {/* Fresh Start Section */}
             <div className="mt-6 p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30">
                 <div className="flex items-start space-x-4">
                     <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20 flex-shrink-0">

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
-import { formatCurrency, formatCompactCurrency } from "../utils/helpers";
+import { formatCompactCurrency } from "../utils/helpers";
 import { useFinance } from "../hooks/useFinance";
 import {
   Heart,
