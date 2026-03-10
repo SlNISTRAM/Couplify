@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Joyride, { STATUS } from 'react-joyride';
 
 const InteractiveMonthlyTour = ({ run, setRun, monthName, onTourFinish }) => {

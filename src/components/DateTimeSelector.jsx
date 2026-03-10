@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 
 const DateTimeSelector = ({ value, onChange, color = 'indigo', size = 'md', showLabel = true }) => {

@@ -91,7 +91,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
   const yearDistributionMap = {};
   let totalYearVariable = 0;
   
-  yearData.forEach((m, idx) => {
+  yearData.forEach((m) => {
     const mIndex = monthsData.indexOf(m);
     const dist = getExpenseDistribution(mIndex);
     dist.forEach(d => {
@@ -340,7 +340,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
           </div>
           <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar snap-x snap-mandatory">
               {Object.entries(accountBalances)
-                .filter(([_, data]) => data.type !== 'vault')
+                .filter(([, data]) => data.type !== 'vault')
                 .map(([id, data]) => {
                   const isCredit = data.type === 'credit';
                   const isNegative = data.balance < 0;

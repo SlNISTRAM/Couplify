@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Plus, Utensils, Gamepad2, Heart, Shirt, Package, Calculator, Car, Home, Tv, PartyPopper, Stethoscope, Banknote, CreditCard, Wallet } from 'lucide-react';
 import { useFinance } from '../hooks/useFinance';
 import { useToast } from '../context/ToastContext';
-import { EXPENSE_CATEGORIES, ACCOUNTS } from '../utils/constants';
+import { EXPENSE_CATEGORIES } from '../utils/constants';
 import DateTimeSelector from './DateTimeSelector';
 
 const QuickExpenseModal = ({ isOpen, onClose, monthRelIndex, selectedYear }) => {
@@ -44,15 +44,6 @@ const QuickExpenseModal = ({ isOpen, onClose, monthRelIndex, selectedYear }) => 
       case 'Regalos': return <PartyPopper size={18} />;
       case 'Ropa': return <Shirt size={18} />;
       default: return <Package size={18} />;
-    }
-  };
-
-  const getAccountIcon = (iconName) => {
-    switch (iconName) {
-      case 'Banknote': return <Banknote size={16} />;
-      case 'CreditCard': return <CreditCard size={16} />;
-      case 'Wallet': return <Wallet size={16} />;
-      default: return <Banknote size={16} />;
     }
   };
 

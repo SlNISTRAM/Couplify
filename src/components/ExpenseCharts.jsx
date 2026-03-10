@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { formatCurrency } from '../utils/helpers';
 import { PieChart, TrendingUp, BarChart3 } from 'lucide-react';
 
@@ -21,28 +21,17 @@ const COLORS = [
 
 const DonutChart = ({ data, total }) => {
     // Simple SVG Donut logic
-    let cumulativePercent = 0;
-    
-    // Safety check for empty data
-    if (!data || data.length === 0) {
-        return (
-            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
-                <PieChart size={48} className="mb-2 opacity-20" />
-                <p className="text-xs font-bold uppercase tracking-widest">Sin datos este mes</p>
-            </div>
-        );
-    }
-
+    let currentCumulative = 0;
     const segments = data.map((item, index) => {
         const percent = (item.value / total) * 100;
-        const startPercent = cumulativePercent;
-        cumulativePercent += percent;
+        const startPercent = currentCumulative;
+        currentCumulative += percent;
         
         // Convert percentage to circle coordinates
         const x1 = Math.cos(2 * Math.PI * (startPercent / 100));
         const y1 = Math.sin(2 * Math.PI * (startPercent / 100));
-        const x2 = Math.cos(2 * Math.PI * (cumulativePercent / 100));
-        const y2 = Math.sin(2 * Math.PI * (cumulativePercent / 100));
+        const x2 = Math.cos(2 * Math.PI * (currentCumulative / 100));
+        const y2 = Math.sin(2 * Math.PI * (currentCumulative / 100));
         
         const largeArcFlag = percent > 50 ? 1 : 0;
         
@@ -184,7 +173,7 @@ const AreaChartTrend = ({ data }) => {
     );
 };
 
-const ExpenseCharts = ({ distribution, trend, totalSpent, title = "Análisis de Gastos", subLabel = "A dónde se va el dinero este mes", showTrend = true }) => {
+const ExpenseCharts = ({ distribution, trend, title = "Análisis de Gastos", subLabel = "A dónde se va el dinero este mes", showTrend = true }) => {
     return (
         <div className={`grid grid-cols-1 ${showTrend ? 'lg:grid-cols-2' : ''} gap-8 mb-10`}>
             {/* Distribution Chart */}

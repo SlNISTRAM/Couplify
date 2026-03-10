@@ -3,11 +3,11 @@ import { formatCurrency } from '../utils/helpers';
 import { Shield, PiggyBank } from 'lucide-react';
 
 const BovedasSection = ({ accountBalances = {} }) => {
-  const vaults = Object.entries(accountBalances).filter(([id, data]) => data.type === 'vault');
+  const vaults = Object.entries(accountBalances).filter(([, data]) => data.type === 'vault');
 
   if (vaults.length === 0) return null;
 
-  const totalSaved = vaults.reduce((sum, [id, data]) => sum + data.balance, 0);
+  const totalSaved = vaults.reduce((sum, [, data]) => sum + data.balance, 0);
 
   return (
     <section className="mb-0 mt-8">

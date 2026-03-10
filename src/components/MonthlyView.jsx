@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useFinance } from "../hooks/useFinance";
 import { useToast } from "../context/ToastContext";
 import {
   formatCurrency,
   formatCompactCurrency,
-  getDaysRemaining,
 } from "../utils/helpers";
 import {
   Plus,
@@ -45,6 +44,15 @@ import {
   Copy,
   ChevronDown as ChevronIcon,
   Clock,
+  ChevronRight, // Added from new imports
+  ArrowUpRight, // Added from new imports
+  ArrowDownRight, // Added from new imports
+  CheckCircle2, // Added from new imports
+  AlertCircle, // Added from new imports
+  MoreVertical, // Added from new imports
+  Edit2, // Added from new imports
+  Search, // Added from new imports
+  ArrowRight // Added from new imports
 } from "lucide-react";
 import { EXPENSE_CATEGORIES, ACCOUNTS } from "../utils/constants";
 import ExpenseCharts from "./ExpenseCharts";
@@ -57,11 +65,10 @@ const AccountSelector = ({
   onChange,
   accounts,
   size = "sm",
-  color = "indigo",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedAccount = accounts.find((a) => a.id === value) || accounts[0];
-  const Icon = selectedAccount?.type === 'vault' 
+  const Icon = selectedAccount?.type === 'vault'
     ? PiggyBank
     : selectedAccount?.id === "cash"
       ? Banknote
@@ -77,8 +84,8 @@ const AccountSelector = ({
       if (isOpen && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        const dropdownHeight = 300; 
-        
+        const dropdownHeight = 300;
+
         setDropUp(spaceBelow < dropdownHeight);
         setCoords({
           top: rect.top,
@@ -89,7 +96,6 @@ const AccountSelector = ({
       }
     }, [isOpen]);
 
-    const { showToast } = useToast();
 
   return (
     <div ref={containerRef} className="relative">
@@ -128,20 +134,20 @@ const AccountSelector = ({
 
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none">
-          <div 
+          <div
             className="fixed inset-0 bg-transparent pointer-events-auto"
             onMouseDown={(e) => {
               e.stopPropagation();
               setIsOpen(false);
             }}
           ></div>
-          <div 
+          <div
             className={`fixed p-2 space-y-1 bg-white dark:bg-[#1e293b] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-700/50 overflow-hidden pointer-events-auto`}
             style={{
-              width: '240px', 
+              width: '240px',
               left: coords.left,
-              ...(dropUp 
-                ? { bottom: window.innerHeight - coords.top + 8 } 
+              ...(dropUp
+                ? { bottom: window.innerHeight - coords.top + 8 }
                 : { top: coords.bottom + 8 }
               )
             }}
@@ -207,7 +213,6 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     updateFixedExpenseAmount,
     addFixedExpense,
     removeFixedExpense,
-    updateSavingsAmount,
     updateSavingsPayment,
     addAdditionalIncome,
     removeAdditionalIncome,
@@ -218,9 +223,7 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     updateBaseIncome,
     updateBonusIncome,
     updateSavingsGoal,
-    updateVariableBudget,
     addInstallmentExpense,
-    getExpenseDistribution,
     addVariableExpense,
     removeVariableExpense,
     updateVariableExpense,
@@ -228,25 +231,12 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     restoreFixedExpense,
     moveFixedExpense,
     updateFixedExpenseMetadata,
+    getExpenseDistribution,
     accounts,
     loading,
     error,
   } = useFinance();
   const { showToast } = useToast();
-  
-  // Onboarding Tour State
-  const [runTour, setRunTour] = useState(false);
-  useEffect(() => {
-    if (!userName) return;
-
-    const hasSeenTour = localStorage.getItem('hasSeenCouplifyMonthlyTour');
-    if (!hasSeenTour && monthsData && monthsData.length > 0 && accounts) {
-      const timer = setTimeout(() => {
-        setRunTour(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [monthsData, accounts, userName]);
 
   const getCategoryIcon = (category) => {
     switch (category) {
@@ -270,6 +260,98 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
         return <Package size={18} />;
     }
   };
+
+  // 1. Hook Declarations (Must be at the top)
+
+  // Onboarding Tour State
+  const [runTour, setRunTour] = useState(false);
+
+  // Month Selection State (Derived from props)
+  const currentMonthIndex = useMemo(() => {
+    if (!monthsData) return -1;
+    return monthsData.findIndex(
+      (m) => m.year === year && m.monthIndex === monthRelIndex,
+    );
+  }, [monthsData, year, monthRelIndex]);
+
+  useEffect(() => {
+    if (!userName) return;
+
+    const hasSeenTour = localStorage.getItem('hasSeenCouplifyMonthlyTour');
+    if (!hasSeenTour && monthsData && monthsData.length > 0 && accounts) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [monthsData, accounts, userName]);
+
+  const [captureValue, setCaptureValue] = useState(null);
+  const [newFixedExpense, setNewFixedExpense] = useState({
+    name: "",
+    amount: "",
+    accountId: "bank",
+  });
+  const [isLimited, setIsLimited] = useState(false);
+  const [untilMonth, setUntilMonth] = useState(currentMonthIndex);
+  const [unlockedExpenses, setUnlockedExpenses] = useState({}); // Tracking which rows are unlocked
+
+  const [newExpense, setNewExpense] = useState({
+    description: "",
+    amount: "",
+    category: EXPENSE_CATEGORIES[0],
+    accountId: accounts?.[0]?.id || "cash",
+    isInstallment: false,
+    installments: 12,
+    customDate: "",
+  });
+
+  // Dynamic sorting of categories based on usage frequency (count of records)
+  const sortedCategories = useMemo(() => {
+    if (!monthsData) return EXPENSE_CATEGORIES;
+    const counts = {};
+    monthsData.forEach((month) => {
+      month.variableExpenses?.forEach((exp) => {
+        counts[exp.category] = (counts[exp.category] || 0) + 1;
+      });
+    });
+    return [...EXPENSE_CATEGORIES].sort(
+      (a, b) => (counts[b] || 0) - (counts[a] || 0),
+    );
+  }, [monthsData]);
+
+  // Modal State
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "",
+    onConfirm: () => {},
+    type: "danger",
+  });
+
+  // Income Editing State
+  const [editingIncomeId, setEditingIncomeId] = useState(null);
+  const [editIncomeValues, setEditIncomeValues] = useState({
+    description: "",
+    amount: "",
+  });
+
+  // Partner Name Editing State
+  const [editingPartnerName, setEditingPartnerName] = useState(false);
+  const [tempPartnerName, setTempPartnerName] = useState("");
+
+  // Savings Update Confirmation State
+  const [pendingUpdate, setPendingUpdate] = useState(null); // { type, isPartner, amount }
+  const [uiVersion, setUiVersion] = useState(0);
+
+  const [newIncome, setNewIncome] = useState({
+    description: "",
+    amount: "",
+    accountId: "bank",
+  });
+
+  // 2. Conditional Returns (After all hooks)
 
   if (error) {
     return (
@@ -300,11 +382,6 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     );
   }
 
-  // Find the valid global index for this specific year/month combo
-  const currentMonthIndex = monthsData.findIndex(
-    (m) => m.year === year && m.monthIndex === monthRelIndex,
-  );
-
   if (currentMonthIndex === -1)
     return (
       <div className="p-10 text-center text-slate-400">Mes no disponible</div>
@@ -317,52 +394,9 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
   const variableBudget = stats.variableBudget;
   const dynamicStats = stats;
 
-  const [captureValue, setCaptureValue] = useState(null);
-  const [newFixedExpense, setNewFixedExpense] = useState({
-    name: "",
-    amount: "",
-    accountId: "bank",
-  });
-  const [isLimited, setIsLimited] = useState(false);
-  const [untilMonth, setUntilMonth] = useState(currentMonthIndex);
-  const [editingExpenseId, setEditingExpenseId] = useState(null);
-  const [unlockedExpenses, setUnlockedExpenses] = useState({}); // Tracking which rows are unlocked
-
-  const [newExpense, setNewExpense] = useState({
-    description: "",
-    amount: "",
-    category: EXPENSE_CATEGORIES[0],
-    accountId: accounts[0]?.id || "cash",
-    isInstallment: false,
-    installments: 12,
-    customDate: "",
-  });
-
-  // Dynamic sorting of categories based on usage frequency (count of records)
-  const sortedCategories = React.useMemo(() => {
-    const counts = {};
-    monthsData.forEach((month) => {
-      month.variableExpenses?.forEach((exp) => {
-        counts[exp.category] = (counts[exp.category] || 0) + 1;
-      });
-    });
-    return [...EXPENSE_CATEGORIES].sort(
-      (a, b) => (counts[b] || 0) - (counts[a] || 0),
-    );
-  }, [monthsData]);
-
-  // Modal State
-  const [confirmConfig, setConfirmConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    confirmText: "",
-    onConfirm: () => {},
-    type: "danger",
-  });
-
   const closeConfirm = () =>
     setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+  const forceInputReset = () => setUiVersion((v) => v + 1);
 
   const handleAddExpense = (e) => {
     e.preventDefault();
@@ -401,29 +435,6 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     }));
   };
 
-  // Income Editing State
-  const [editingIncomeId, setEditingIncomeId] = useState(null);
-  const [editIncomeValues, setEditIncomeValues] = useState({
-    description: "",
-    amount: "",
-  });
-
-  // Partner Name Editing State
-  const [editingPartnerName, setEditingPartnerName] = useState(false);
-  const [tempPartnerName, setTempPartnerName] = useState("");
-
-  // Savings Update Confirmation State
-  const [pendingUpdate, setPendingUpdate] = useState(null); // { type, isPartner, amount }
-  const [uiVersion, setUiVersion] = useState(0);
-
-  const forceInputReset = () => setUiVersion((v) => v + 1);
-
-  const [newIncome, setNewIncome] = useState({
-    description: "",
-    amount: "",
-    accountId: "bank",
-  });
-
   const handleAddIncome = (e) => {
     e.preventDefault();
     if (!newIncome.description || !newIncome.amount) return;
@@ -448,28 +459,9 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
       isLimited ? parseInt(untilMonth) : null,
     );
     showToast(`Pago fijo añadido: ${newFixedExpense.name}`, "success");
-    setNewFixedExpense({ name: "", amount: "" });
+    setNewFixedExpense({ name: "", amount: "", accountId: "bank" });
     setIsLimited(false);
   };
-
-  // Determine Alert Color & Styles for Light Theme
-  let statusColor = "text-emerald-600";
-  let statusBg = "bg-gradient-to-br from-emerald-100 to-teal-100";
-  let statusBorder = "border-emerald-200";
-  let statusIconColor = "text-emerald-500";
-
-  if (stats.availableReal < 20) {
-    statusColor = "text-rose-600";
-    statusBg =
-      "bg-gradient-to-br from-rose-100 to-orange-100 animate-pulse-slow";
-    statusBorder = "border-rose-200";
-    statusIconColor = "text-rose-500";
-  } else if (stats.availableReal < 100) {
-    statusColor = "text-amber-600";
-    statusBg = "bg-gradient-to-br from-amber-100 to-yellow-100";
-    statusBorder = "border-amber-200";
-    statusIconColor = "text-amber-500";
-  }
 
   return (
     <div className="space-y-6 animate-fade-in-up">

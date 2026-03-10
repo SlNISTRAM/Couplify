@@ -7,6 +7,7 @@ import QuickExpenseModal from './QuickExpenseModal';
 import Logo from './Logo';
 import { Plus } from 'lucide-react';
 
+
 const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChange, selectedYear, onYearChange, onEditProfile }) => { // Logo updated
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
@@ -15,7 +16,7 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
   const isDarkMode = theme === 'dark';
   const years = getAvailableYears();
   const months = getMonthsByYear(selectedYear); // Get full month objects for this year
-  const currentMonthData = months[currentMonth];
+
 
   // Robust body scroll lock for mobile
   useEffect(() => {
@@ -41,33 +42,6 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
       document.body.style.width = '';
     };
   }, [isMobileMenuOpen, isQuickExpenseOpen]);
-  // We map over the ACTUAL months available in this year data, not just static 12 names
-  // This handles 2028 having only 3 months.
-
-  const SyncIndicator = () => {
-    if (saveStatus === 'saving') {
-      return (
-        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50">
-          <CloudDrizzle size={12} className="animate-pulse" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Guardando...</span>
-        </div>
-      );
-    }
-    if (saveStatus === 'error') {
-      return (
-        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50">
-          <CloudOff size={12} />
-          <span className="text-[9px] font-black uppercase tracking-widest">Error de Sinc.</span>
-        </div>
-      );
-    }
-    return (
-      <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
-        <Cloud size={12} />
-        <span className="text-[9px] font-black uppercase tracking-widest">Sincronizado</span>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-brand-bg dark:bg-[#0f172a] text-slate-600 dark:text-slate-300">
@@ -76,7 +50,7 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
         <div className="mb-6 flex-shrink-0">
           <Logo />
           <div className="mt-4">
-            <SyncIndicator />
+            <SyncIndicator saveStatus={saveStatus} />
           </div>
         </div>
 
@@ -296,7 +270,7 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
                </div>
             </div>
             <div className="flex-shrink-0">
-              <SyncIndicator />
+              <SyncIndicator saveStatus={saveStatus} />
             </div>
          </div>
          
@@ -340,6 +314,31 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
         monthRelIndex={currentMonth}
         selectedYear={selectedYear}
       />
+    </div>
+  );
+};
+
+const SyncIndicator = ({ saveStatus }) => {
+  if (saveStatus === 'saving') {
+    return (
+      <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50">
+        <CloudDrizzle size={12} className="animate-pulse" />
+        <span className="text-[9px] font-black uppercase tracking-widest">Guardando...</span>
+      </div>
+    );
+  }
+  if (saveStatus === 'error') {
+    return (
+      <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50">
+        <CloudOff size={12} />
+        <span className="text-[9px] font-black uppercase tracking-widest">Error de Sinc.</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
+      <Cloud size={12} />
+      <span className="text-[9px] font-black uppercase tracking-widest">Sincronizado</span>
     </div>
   );
 };

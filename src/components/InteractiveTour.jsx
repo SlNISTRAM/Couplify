@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Joyride, { STATUS } from 'react-joyride';
 
 const InteractiveTour = ({ run, setRun, onTourFinish }) => {
@@ -98,7 +98,7 @@ const InteractiveTour = ({ run, setRun, onTourFinish }) => {
   ]);
 
   const handleJoyrideCallback = (data) => {
-    const { status, action } = data;
+    const { status } = data;
     const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
 
     if (finishedStatuses.includes(status)) {

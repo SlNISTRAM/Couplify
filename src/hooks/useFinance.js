@@ -1,5 +1,4 @@
 import { useFinanceContext } from '../context/FinanceContext';
-import { getDaysRemaining } from '../utils/helpers';
 import { ACCOUNTS } from '../utils/constants';
 
 export const useFinance = () => {
@@ -60,9 +59,7 @@ export const useFinance = () => {
       )
     }));
   };
-
-  const getMonthData = (globalIndex) => data[globalIndex];
-
+  
   const getAvailableYears = () => [...new Set(data.map(m => m.year))];
   
   const getMonthsByYear = (year) => data.filter(m => m.year === year);
@@ -938,7 +935,6 @@ export const useFinance = () => {
     getExpenseDistribution,
     getMonthlyTrend,
     getGlobalSavingsStats,
-    updateGoalMetadata,
     updateAccountSettings,
     setupInitialAccounts,
     updateAccountAdjustment,
@@ -951,14 +947,9 @@ export const useFinance = () => {
     calculateMonthStats,
     getAvailableYears,
     getMonthsByYear,
-    restoreFixedExpense,
-    moveFixedExpense,
     exportData,
     restoreFinanceData,
     loading,
     error
   };
 };
-
-
-

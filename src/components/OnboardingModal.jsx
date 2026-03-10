@@ -9,17 +9,16 @@ import {
   ArrowLeft,
   CheckCircle2,
   Sparkles,
-  AlertTriangle,
   X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useFinance } from '../hooks/useFinance';
 
-const OnboardingModal = ({ isOpen, onComplete, userId, isGuest = false }) => {
+const OnboardingModal = ({ isOpen, onClose, onComplete, isGuest = false }) => {
   const { setupInitialAccounts } = useFinance();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
+
   // Data State
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('PEN');

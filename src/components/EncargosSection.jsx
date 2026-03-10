@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../utils/helpers';
 import { ShoppingBag, Plus, Check, Trash2, X, CreditCard, Wallet, Banknote } from 'lucide-react';
 
-const EncargosSection = ({ currentMonthIndex, encargos = [], stats }) => {
+const EncargosSection = ({ currentMonthIndex, encargos = [] }) => {
   const { addEncargo, completeEncargo, removeEncargo, accounts } = useFinance();
   const { showToast } = useToast();
 
