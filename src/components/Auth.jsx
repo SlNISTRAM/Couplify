@@ -8,6 +8,7 @@ const Auth = ({ onGuestLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
   const handleAuth = async (e) => {
@@ -16,7 +17,13 @@ const Auth = ({ onGuestLogin }) => {
     setMessage({ type: '', content: '' });
 
     try {
-      if (isRegistering) {
+      if (isResettingPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin
+        });
+        if (error) throw error;
+        setMessage({ type: 'success', content: '¡Enviado! Revisa tu correo (incluyendo Spam) para el enlace de recuperación.' });
+      } else if (isRegistering) {
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,
@@ -70,20 +77,36 @@ const Auth = ({ onGuestLogin }) => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  className="glass-input w-full pl-12 h-14"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+            {!isResettingPassword && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
+                  {!isRegistering && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setIsResettingPassword(true);
+                        setMessage({ type: '', content: '' });
+                      }}
+                      className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600 uppercase tracking-wider"
+                    >
+                      ¿La olvidaste?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="password"
+                    required={!isResettingPassword}
+                    placeholder="••••••••"
+                    className="glass-input w-full pl-12 h-14"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {message.content && (
               <div className={`p-4 rounded-2xl text-sm font-bold animate-fade-in ${
@@ -104,8 +127,8 @@ const Auth = ({ onGuestLogin }) => {
                 <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  {isRegistering ? <UserPlus size={20} /> : <LogIn size={20} />}
-                  <span>{isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}</span>
+                  {isResettingPassword ? <Mail size={20} /> : (isRegistering ? <UserPlus size={20} /> : <LogIn size={20} />)}
+                  <span>{isResettingPassword ? 'Enviar Enlace' : (isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión')}</span>
                 </>
               )}
             </button>
@@ -113,12 +136,21 @@ const Auth = ({ onGuestLogin }) => {
 
           <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 text-center">
             <button
-              onClick={() => setIsRegistering(!isRegistering)}
+              onClick={() => {
+                if (isResettingPassword) {
+                  setIsResettingPassword(false);
+                } else {
+                  setIsRegistering(!isRegistering);
+                }
+                setMessage({ type: '', content: '' });
+              }}
               className="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors"
             >
-              {isRegistering 
-                ? '¿Ya tienes cuenta? Inicia sesión' 
-                : '¿No tienes cuenta? Regístrate gratis'}
+              {isResettingPassword 
+                ? '← Volver al inicio de sesión'
+                : (isRegistering 
+                  ? '¿Ya tienes cuenta? Inicia sesión' 
+                  : '¿No tienes cuenta? Regístrate gratis')}
             </button>
 
             <div className="mt-6">

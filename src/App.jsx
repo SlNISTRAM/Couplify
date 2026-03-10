@@ -5,6 +5,7 @@ import MonthlyView from './components/MonthlyView';
 import Auth from './components/Auth';
 import UserProfileModal from './components/UserProfileModal';
 import OnboardingModal from './components/OnboardingModal';
+import UpdatePasswordModal from './components/UpdatePasswordModal';
 import { supabase } from './lib/supabase';
 
 import { ToastProvider } from './context/ToastContext';
@@ -18,6 +19,7 @@ function App() {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [userName, setUserName] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isUpdatePasswordModalOpen, setIsUpdatePasswordModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth()); 
@@ -52,11 +54,16 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsUpdatePasswordModalOpen(true);
+      }
+      
       if (session?.user?.user_metadata?.display_name) {
         setUserName(session.user.user_metadata.display_name);
-      } else if (session) {
+      } else if (session && event !== 'PASSWORD_RECOVERY') {
         setIsOnboardingOpen(true);
       }
     });
@@ -137,6 +144,7 @@ function App() {
             isOpen={isProfileModalOpen} 
             onClose={() => setIsProfileModalOpen(false)}
             initialName={userName}
+            onChangePassword={() => setIsUpdatePasswordModalOpen(true)}
             onNameUpdated={(newName) => {
                 setUserName(newName);
                 setIsProfileModalOpen(false);
@@ -164,6 +172,11 @@ function App() {
             setUserName(name);
             setIsOnboardingOpen(false);
           }}
+        />
+
+        <UpdatePasswordModal 
+          isOpen={isUpdatePasswordModalOpen}
+          onClose={() => setIsUpdatePasswordModalOpen(false)}
         />
       </ToastProvider>
       </FinanceProvider>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Check, X, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-const UserProfileModal = ({ isOpen, onClose, initialName = '', onNameUpdated, onLogout }) => {
+const UserProfileModal = ({ isOpen, onClose, initialName = '', onNameUpdated, onLogout, onChangePassword }) => {
     const [name, setName] = useState(initialName);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -117,12 +117,21 @@ const UserProfileModal = ({ isOpen, onClose, initialName = '', onNameUpdated, on
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tus datos están seguros</span>
                     </div>
                     
-                    <button
-                        onClick={onLogout}
-                        className="text-xs font-bold text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 transition-colors uppercase tracking-widest"
-                    >
-                        Cerrar Sesión
-                    </button>
+                    <div className="flex items-center space-x-6">
+                        <button
+                            onClick={onChangePassword}
+                            className="text-xs font-bold text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors uppercase tracking-widest"
+                        >
+                            Cambiar Contraseña
+                        </button>
+                        <div className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+                        <button
+                            onClick={onLogout}
+                            className="text-xs font-bold text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 transition-colors uppercase tracking-widest"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
