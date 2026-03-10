@@ -119,6 +119,12 @@
   color: #0f172a !important;
   width: 1024px !important; /* Force a standard desktop width for consistent capture */
   margin: 0 auto !important;
+  z-index: 100 !important;
+}
+
+/* React Joyride Custom Overrides */
+.react-joyride__spotlight {
+  border-radius: 24px !important;
 }
 
 .pdf-printing .hidden-print,

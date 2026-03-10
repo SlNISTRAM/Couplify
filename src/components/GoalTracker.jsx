@@ -320,6 +320,11 @@ const GoalTracker = ({ stats }) => {
                     <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                       {goal.name}
                     </h3>
+                    {goal.target === 0 && !goal.isLocked && (
+                      <span className="animate-pulse bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full whitespace-nowrap">
+                        ¡Configura tu meta!
+                      </span>
+                    )}
                     {goal.isLocked && (
                       <button
                         onClick={() => {

@@ -4,6 +4,7 @@ import { formatCurrency, formatCompactCurrency } from '../utils/helpers';
 import { SAVINGS_GOALS } from '../utils/constants';
 import { Home, Heart, TrendingUp, Wallet, Shield, Database, Download, Bot, User, PieChart as PieChartIcon, Plane, Target, AlertTriangle } from 'lucide-react';
 import GoalTracker from './GoalTracker';
+import InteractiveTour from './InteractiveTour';
 import ExpenseCharts from './ExpenseCharts';
 import AiAssistant from './AiAssistant';
 import { useState } from 'react';
@@ -18,7 +19,7 @@ import PrestamosSection from './PrestamosSection';
 import TransferModal from './TransferModal';
 import { ArrowRightLeft, CreditCard, Banknote, X, Save } from 'lucide-react';
 
-function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
+function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewChange }) {
   const { 
     monthsData,
     getMonthsByYear, 
@@ -40,6 +41,24 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [payingCard, setPayingCard] = useState(null); // The card object being paid
   const [payingSource, setPayingSource] = useState(null); // The source account object being selected
+  
+  // Onboarding Tour State
+  const [runTour, setRunTour] = useState(false);
+  
+  React.useEffect(() => {
+    // Check if onboarding is complete (userName is set) before starting tour
+    if (!userName) return;
+
+    // Check if the user has seen the tour before
+    const hasSeenTour = localStorage.getItem('hasSeenCouplifyTour');
+    if (!hasSeenTour) {
+      // Small delay to let initial animations finish
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [userName]);
   
   if (error) {
     return (
@@ -65,7 +84,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
   }
 
   const yearData = getMonthsByYear(selectedYear) || [];
-  const globalSavings = getGlobalSavingsStats() || { depa: { saved: 0, target: 1 }, boda: { saved: 0, target: 1 } };
+  const globalSavings = getGlobalSavingsStats() || { goal1: { saved: 0, target: 1 } };
   
   // Custom logic for Dashboard charts: 
   // We'll show the distribution of the ENTIRE year to give a broad view
@@ -121,6 +140,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
 
   return (
       <div id="dashboard-content" className="space-y-12">
+        <InteractiveTour run={runTour} setRun={setRunTour} onTourFinish={() => onViewChange('month')} />
         {/* Payments Notification Bar */}
         {upcomingPayments.length > 0 && (
           <div className="animate-fade-in-down">
@@ -214,13 +234,24 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
                        <User size={16} />
                    </button>
                </div>
-               <p className="text-slate-400 dark:text-slate-500 text-lg md:text-2xl font-medium tracking-tight">Evolución de tu plan en {selectedYear}</p>
+               <div className="flex items-center space-x-3">
+                 <p className="text-slate-400 dark:text-slate-500 text-lg md:text-2xl font-medium tracking-tight">Evolución de tu plan en {selectedYear}</p>
+                 <button 
+                   onClick={() => {
+                     localStorage.removeItem('hasSeenCouplifyMonthlyTour');
+                     setRunTour(true);
+                   }}
+                   className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 px-3 py-1 rounded-full transition-colors flex items-center space-x-1"
+                 >
+                   <span>¿Ver Tour?</span>
+                 </button>
+               </div>
            </div>
            
             <div className="flex items-center space-x-3">
                <button 
                     onClick={() => setIsAiOpen(true)}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-brand-primary to-brand-secondary px-6 py-4 rounded-3xl text-white font-black text-sm shadow-lg shadow-brand-primary/20 hover:scale-[1.02] active:scale-95 transition-all outline-none"
+                    className="tour-ia flex items-center space-x-2 bg-gradient-to-r from-brand-primary to-brand-secondary px-6 py-4 rounded-3xl text-white font-black text-sm shadow-lg shadow-brand-primary/20 hover:scale-[1.02] active:scale-95 transition-all outline-none"
                >
                     <Bot size={18} />
                     <span>Analizar con AI</span>
@@ -266,7 +297,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
 
                     <button 
                         onClick={() => generateFinancialReport(userName, selectedYear, yearData, globalSavings, yearDistribution, monthlyTrend)}
-                        className="flex items-center justify-center space-x-2 bg-white dark:bg-slate-800 px-4 md:px-6 py-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-500 dark:text-slate-400 font-bold text-sm no-print"
+                        className="tour-reporte flex items-center justify-center space-x-2 bg-white dark:bg-slate-800 px-4 md:px-6 py-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-500 dark:text-slate-400 font-bold text-sm no-print"
                         title="Generar Informe Financiero"
                     >
                         <Plane size={18} className="text-rose-500" />
@@ -285,7 +316,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
       />
 
       {/* Account Balances Section */}
-      <section>
+      <section className="tour-cuentas">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center space-x-3">
                   <div className="bg-emerald-600 text-white min-w-8 w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-black text-xs"><Wallet size={16} /></div>
@@ -362,7 +393,9 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
           </div>
       </section>
 
-      <GoalTracker stats={globalSavings} />
+      <div className="tour-metas">
+        <GoalTracker stats={globalSavings} />
+      </div>
 
       {/* Vaults Section */}
       <BovedasSection accountBalances={accountBalances} />
@@ -449,14 +482,19 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName }) {
                     <p className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight">
                         {formatCompactCurrency(yearData.reduce((sum, m) => {
                             const detail = m.savingsPayments;
-                            const realized = 
-                                (Number(detail?.depa?.userPaid || 0) + Number(detail?.depa?.partnerPaid || 0)) +
-                                (Number(detail?.boda?.userPaid || 0) + Number(detail?.boda?.partnerPaid || 0));
+                            if (!detail) return sum;
+                            const realized = Object.values(detail).reduce((acc, goal) => {
+                                return acc + (Number(goal.userPaid || 0) + Number(goal.partnerPaid || 0));
+                            }, 0);
                             return sum + realized;
                         }, 0))}
                     </p>
                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                        Meta: {formatCompactCurrency(yearData.reduce((sum, m) => sum + Number(m.savings.depa) + Number(m.savings.boda), 0))}
+                        Meta: {formatCompactCurrency(yearData.reduce((sum, m) => {
+                            if (!m.savings) return sum;
+                            const planned = Object.values(m.savings).reduce((acc, val) => acc + (Number(val) || 0), 0);
+                            return sum + planned;
+                        }, 0))}
                     </p>
                 </div>
 

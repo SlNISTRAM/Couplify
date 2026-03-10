@@ -20,7 +20,6 @@ export const FIXED_EXPENSES_BASE = [];
 
 export const SAVINGS_GOALS = {
   goal1: { name: "Meta 1", monthly: 0, total: 0 },
-  goal2: { name: "Meta 2", monthly: 0, total: 0 },
 };
 
 export const EXPENSE_CATEGORIES = [

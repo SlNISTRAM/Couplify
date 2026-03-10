@@ -121,12 +121,14 @@ function App() {
                 currentMonth={currentMonth} 
                 userName={userName}
                 onEditName={() => setIsProfileModalOpen(true)}
+                onViewChange={setCurrentView}
             />
           ) : (
             <MonthlyView 
                 year={selectedYear} 
                 monthRelIndex={currentMonth} 
                 userName={userName}
+                onViewChange={setCurrentView}
             />
           )}
         </Layout>

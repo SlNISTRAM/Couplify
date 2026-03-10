@@ -50,6 +50,7 @@ import { EXPENSE_CATEGORIES, ACCOUNTS } from "../utils/constants";
 import ExpenseCharts from "./ExpenseCharts";
 import ConfirmModal from "./ConfirmModal";
 import DateTimeSelector from "./DateTimeSelector";
+import InteractiveMonthlyTour from "./InteractiveMonthlyTour";
 
 const AccountSelector = ({
   value,
@@ -199,7 +200,7 @@ const AccountSelector = ({
   );
 };
 
-const MonthlyView = ({ year, monthRelIndex, userName }) => {
+const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
   const {
     monthsData,
     updateFixedPayment,
@@ -232,6 +233,21 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
     error,
   } = useFinance();
   const { showToast } = useToast();
+  
+  // Onboarding Tour State
+  const [runTour, setRunTour] = useState(false);
+  useEffect(() => {
+    if (!userName) return;
+
+    const hasSeenTour = localStorage.getItem('hasSeenCouplifyMonthlyTour');
+    if (!hasSeenTour && monthsData && monthsData.length > 0 && accounts) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [monthsData, accounts, userName]);
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case "Comida":
@@ -457,11 +473,12 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
+      <InteractiveMonthlyTour run={runTour} setRun={setRunTour} monthName={monthData?.name || "este mes"} onTourFinish={() => onViewChange('dashboard')} />
       {/* Mobile Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Real Wallet Card */}
         <div
-          className={`app-card p-6 border-l-8 ${stats.availableReal < 20 ? "border-l-rose-500" : "border-l-emerald-500"} relative`}
+          className={`tour-mensual-disponible app-card p-6 border-l-8 ${stats.availableReal < 20 ? "border-l-rose-500" : "border-l-emerald-500"} relative`}
         >
           <div className="flex justify-between items-start">
             <div>
@@ -536,7 +553,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
         <div className="space-y-8">
           {/* 1. Income Section */}
           <section>
-            <div className="flex items-center mb-4 space-x-3">
+            <div className="tour-mensual-ingresos flex items-center mb-4 space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold shadow-sm">
                 <Wallet size={20} />
               </div>
@@ -853,7 +870,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
 
           {/* 2. Plan de Ahorro Section */}
           <section>
-            <div className="flex items-center mb-4 space-x-3">
+            <div className="tour-mensual-ahorro flex items-center mb-4 space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shadow-sm">
                 <PiggyBank size={20} />
               </div>
@@ -1192,7 +1209,7 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
 
           {/* 3. Fixed Expenses Section */}
           <section>
-            <div className="flex items-center justify-between mb-4">
+            <div className="tour-mensual-fijos flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-900/30 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold shadow-sm">
                   <CheckCircle size={20} />
@@ -1583,9 +1600,9 @@ const MonthlyView = ({ year, monthRelIndex, userName }) => {
         <div className="space-y-8">
           {/* 4. Variable Expenses Section */}
           <section>
-            <div className="flex items-center justify-between mb-4">
+            <div className="tour-mensual-variables flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200 dark:shadow-none">
                   <ShoppingBag size={20} />
                 </div>
                 <div>

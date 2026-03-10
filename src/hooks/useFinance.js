@@ -243,8 +243,7 @@ export const useFinance = () => {
   };
 
   const getGoalMetadataOrDefault = (m) => m.goalMetadata || {
-    depa: { name: "Departamento", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 19200, isShared: true },
-    boda: { name: "Boda", icon: "Star", color: "from-rose-500 to-pink-600", bg: "bg-rose-50", text: "text-rose-600", target: 9600, isShared: true }
+    goal1: { name: "Meta 1", icon: "Target", color: "from-blue-500 to-indigo-600", bg: "bg-indigo-50", text: "text-indigo-600", target: 0, isLocked: false }
   };
 
   const updateGoalMetadata = (goalId, newMetadata) => {
@@ -688,7 +687,7 @@ export const useFinance = () => {
 
       // Savings
       let userSavingsRealizedInMonth = 0;
-      const currentGoals = m.goalMetadata || { depa: {}, boda: {} };
+      const currentGoals = m.goalMetadata || { goal1: {} };
       Object.keys(currentGoals).forEach(type => {
         const p = m.savingsPayments?.[type];
         if (p) {
@@ -732,7 +731,7 @@ export const useFinance = () => {
         sum + (i.received ? Number(i.amount) : 0), 0);
     const totalIncomeRealized = baseRealized + bonusRealized + extraRealized;
     
-    const activeGoals = month.goalMetadata || { depa: {}, boda: {} };
+    const activeGoals = month.goalMetadata || { goal1: {} };
     let userSavingsRealized = 0;
     let partnerSavingsRealized = 0;
     let userSavingsPlanned = 0;

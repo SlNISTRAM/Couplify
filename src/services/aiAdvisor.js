@@ -52,7 +52,7 @@ export const getFinancialInsights = async (data, currentYear, currentMonthIndex,
             Instrucciones de respuesta:
             - Sé breve, directo y usa un tono amigable pero profesional.
             - Da un consejo sobre si el gasto variable actual es saludable balanceado con las obligaciones.
-            - Menciona el progreso de las metas de forma motivadora.
+            - SI notas que el Progreso de Metas menciona "Meta 1" o tiene un objetivo/ahorro general de 0, incluye un consejo prioritario (type "info" o "success") invitando a la pareja a definir su primera meta financiera juntos (ej. un viaje, un fondo de emergencia).
             - Si los ingresos cobrados son menores a las obligaciones, da una alerta "danger".
             
             Responde ÚNICAMENTE con un array JSON de 4 consejos (pueden ser menos si es necesario, pero máximo 4):
@@ -186,6 +186,7 @@ Instrucciones:
 - Responde consultas sobre cómo ahorrar, si un gasto es prudente, o cómo va su progreso.
 - Usa lenguaje sencillo y cercano.
 - Basa TODAS tus respuestas en el contexto financiero proporcionado.
+- Si notas que la meta principal se llama "Meta 1" o tiene un ahorro de S/0, anímalos amablemente a entrar a la aplicación, hacer clic en la meta y configurarle un nombre divertido y un objetivo real.
 - Si te preguntan sobre metas, usa los montos que ya están en el contexto.`;
 
         // Models to try in order

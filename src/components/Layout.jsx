@@ -97,9 +97,6 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
 
             <button
               onClick={() => {
-                const now = new Date();
-                onYearChange(now.getFullYear());
-                onMonthChange(now.getMonth());
                 onViewChange('month');
               }}
               className={`w-full flex items-center space-x-4 p-4 rounded-2xl transition-all ${
@@ -209,9 +206,6 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
               </button>
               <button
                 onClick={() => {
-                   const now = new Date();
-                   onYearChange(now.getFullYear());
-                   onMonthChange(now.getMonth());
                    onViewChange('month');
                    setIsMobileMenuOpen(false);
                 }}
@@ -329,9 +323,6 @@ const Layout = ({ children, currentView, onViewChange, currentMonth, onMonthChan
 
             <button 
                onClick={() => {
-                  const now = new Date();
-                  onYearChange(now.getFullYear());
-                  onMonthChange(now.getMonth());
                   onViewChange('month');
                }}
                className={`flex flex-col items-center justify-center transition-all duration-300 ${currentView === 'month' ? 'text-brand-primary -translate-y-1' : 'text-slate-300'}`}
