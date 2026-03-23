@@ -2,7 +2,7 @@ import React from 'react';
 import { formatCurrency } from '../utils/helpers';
 import { Shield, PiggyBank } from 'lucide-react';
 
-const BovedasSection = ({ accountBalances = {} }) => {
+const BovedasSection = ({ accountBalances = {}, onAccountClick }) => {
   const vaults = Object.entries(accountBalances).filter(([, data]) => data.type === 'vault');
 
   if (vaults.length === 0) return null;
@@ -29,7 +29,11 @@ const BovedasSection = ({ accountBalances = {} }) => {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {vaults.map(([id, data]) => (
-          <div key={id} className="app-card p-5 border-l-4 border-l-purple-500 hover:scale-[1.02] transition-transform">
+          <div 
+            key={id} 
+            onClick={() => onAccountClick && onAccountClick(id)}
+            className="app-card p-5 border-l-4 border-l-purple-500 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all group"
+          >
             <div className="flex justify-between items-start mb-3">
               <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{data.name}</span>
               <div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-500">

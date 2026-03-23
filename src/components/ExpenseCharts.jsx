@@ -20,6 +20,8 @@ const COLORS = [
 ];
 
 const DonutChart = ({ data, total }) => {
+    const [activeIndex, setActiveIndex] = React.useState(null);
+    
     // Simple SVG Donut logic
     const segments = [];
     let currentCumulative = 0;
@@ -55,29 +57,82 @@ const DonutChart = ({ data, total }) => {
         currentCumulative = endPercent;
     });
 
+    const activeSegment = activeIndex !== null ? segments[activeIndex] : null;
+
     return (
         <div className="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-10 py-6">
-            <div className="relative w-48 h-48">
-                <svg viewBox="-1.1 -1.1 2.2 2.2" className="transform -rotate-90 w-full h-full drop-shadow-xl">
-                    {segments.map((s, i) => (
-                        <path key={i} d={s.path} fill={s.color} />
-                    ))}
+            <div className="relative w-48 h-48 group/chart">
+                <svg viewBox="-1.1 -1.1 2.2 2.2" className="transform -rotate-90 w-full h-full drop-shadow-xl overflow-visible">
+                    {segments.map((s, i) => {
+                        const isActive = activeIndex === i;
+                        return (
+                            <path 
+                                key={i} 
+                                d={s.path} 
+                                fill={s.color} 
+                                className={`transition-all duration-300 cursor-pointer ${isActive ? 'scale-[1.05]' : 'opacity-80 hover:opacity-100 hover:scale-[1.02]'}`}
+                                onMouseEnter={() => setActiveIndex(i)}
+                                onMouseLeave={() => setActiveIndex(null)}
+                                onTouchStart={(e) => {
+                                    e.preventDefault();
+                                    setActiveIndex(i);
+                                }}
+                            />
+                        );
+                    })}
                     {/* Inner hole for donut */}
-                    <circle cx="0" cy="0" r="0.7" className="fill-white dark:fill-slate-900" />
+                    <circle 
+                        cx="0" 
+                        cy="0" 
+                        r="0.75" 
+                        className="fill-white dark:fill-slate-900 transition-all duration-500" 
+                        onMouseEnter={() => setActiveIndex(null)}
+                    />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase leading-none">Total</span>
-                    <span className="text-xl font-black text-slate-800 dark:text-white tracking-tighter">{formatCurrency(total)}</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none px-4">
+                    {activeSegment ? (
+                        <div className="animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
+                            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase leading-none mb-1 tracking-widest truncate max-w-[100px]">
+                                {activeSegment.name}
+                            </span>
+                            <span className="text-lg font-black text-indigo-500 tracking-tighter transition-all">
+                                {formatCurrency(activeSegment.value)}
+                            </span>
+                            <span className="text-[10px] font-black text-slate-400 mt-0.5">{activeSegment.percent}%</span>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase leading-none tracking-widest mb-1">Total</span>
+                            <span className="text-xl font-black text-slate-800 dark:text-white tracking-tighter">{formatCurrency(total)}</span>
+                        </div>
+                    )}
                 </div>
             </div>
             
-            <div className="flex-1 grid grid-cols-2 gap-4">
+            <div className="flex-1 grid grid-cols-2 gap-x-6 gap-y-4">
                 {segments.map((s, i) => (
-                    <div key={i} className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }}></div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase truncate max-w-[80px]">{s.name}</span>
-                            <span className="text-sm font-bold text-slate-700">{s.percent}%</span>
+                    <div 
+                        key={i} 
+                        className={`flex items-center space-x-3 cursor-pointer transition-all duration-200 group/legend ${activeIndex === i ? 'translate-x-1' : 'opacity-70 hover:opacity-100'}`}
+                        onMouseEnter={() => {
+                            setActiveIndex(i);
+                        }}
+                        onMouseLeave={() => setActiveIndex(null)}
+                        onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+                    >
+                        <div 
+                            className={`w-3 h-3 rounded-full shadow-sm transition-transform duration-300 ${activeIndex === i ? 'scale-125 ring-2 ring-offset-2 ring-indigo-500' : ''}`} 
+                            style={{ backgroundColor: s.color }}
+                        ></div>
+                        <div className="flex flex-col min-w-0">
+                            <span className={`text-[10px] font-black uppercase truncate tracking-tight transition-colors ${activeIndex === i ? 'text-indigo-500' : 'text-slate-400 group-hover/legend:text-slate-600 dark:group-hover/legend:text-slate-300'}`}>
+                                {s.name}
+                            </span>
+                            <div className="flex items-baseline space-x-1">
+                                <span className={`text-sm font-black tracking-tight ${activeIndex === i ? 'text-slate-800 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                                    {s.percent}%
+                                </span>
+                            </div>
                         </div>
                     </div>
                 ))}

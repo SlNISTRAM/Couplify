@@ -149,15 +149,27 @@ export const useFinance = () => {
     }));
   };
 
-  const updateSavingsPayment = (monthIndex, goalKey, type, amount) => {
+  const updateSavingsPayment = (monthIndex, goalKey, type, amount, date, sourceAccount, destAccount) => {
     updateMonthData(monthIndex, (month) => {
       const goalMeta = (month.goalMetadata || monthsData[0]?.goalMetadata || {})[goalKey];
       const currentPayments = month.savingsPayments?.[goalKey] || { userPaid: 0, partnerPaid: 0, completed: false };
       
+      const normalizedType = type.includes('Paid') ? type : `${type}Paid`;
+
       const newPayments = {
         ...currentPayments,
-        [`${type}Paid`]: amount
+        [normalizedType]: amount
       };
+
+      if (date !== undefined) newPayments.date = date;
+
+      if (normalizedType === 'userPaid') {
+        if (sourceAccount !== undefined) newPayments.userAccountId = sourceAccount;
+        if (destAccount !== undefined) newPayments.userDestAccountId = destAccount;
+      } else if (normalizedType === 'partnerPaid') {
+        if (sourceAccount !== undefined) newPayments.partnerAccountId = sourceAccount;
+        if (destAccount !== undefined) newPayments.partnerDestAccountId = destAccount;
+      }
 
       // Recalculate completion
       const userGoal = Number(month.savings?.[goalKey] || 0);
@@ -239,6 +251,84 @@ export const useFinance = () => {
     });
   };
 
+  const addFixedExpense = (monthIndex, expense, untilMonth = null) => {
+    const endMonth = untilMonth !== null ? Math.min(untilMonth, monthsData.length - 1) : monthsData.length - 1;
+    for (let m = monthIndex; m <= endMonth; m++) {
+      updateMonthData(m, (month) => ({
+        ...month,
+        fixedExpenses: [...month.fixedExpenses, { ...expense, id: `fixed-${Date.now()}` }]
+      }));
+    }
+  };
+
+  const removeFixedExpense = (monthIndex, expenseId, deleteFuture = false) => {
+    const endMonth = deleteFuture ? monthsData.length - 1 : monthIndex;
+    
+    // Check if it's an installment to handle its family of IDs if deleting future
+    let baseId = null;
+    if (deleteFuture && expenseId.startsWith('inst-')) {
+      // Installment IDs are like "inst-timestamp-index"
+      const lastDash = expenseId.lastIndexOf('-');
+      if (lastDash > 0) {
+        baseId = expenseId.substring(0, lastDash);
+      }
+    }
+
+    for (let m = monthIndex; m <= endMonth; m++) {
+      updateMonthData(m, (month) => ({
+        ...month,
+        fixedExpenses: month.fixedExpenses.filter(e => {
+          if (baseId && deleteFuture) {
+            return !e.id.startsWith(baseId);
+          }
+          return e.id !== expenseId;
+        }),
+        payments: { ...month.payments, [expenseId]: { amountPaid: 0, completed: false, date: null } }
+      }));
+    }
+  };
+
+  const updateFixedExpenseAmount = (monthIndex, expenseId, amount, updateFuture = false) => {
+    const endMonth = updateFuture ? monthsData.length - 1 : monthIndex;
+    for (let m = monthIndex; m <= endMonth; m++) {
+      updateMonthData(m, (month) => ({
+        ...month,
+        fixedExpenses: month.fixedExpenses.map(e => e.id === expenseId ? { ...e, amount } : e)
+      }));
+    }
+  };
+
+  const updateFixedExpenseMetadata = (monthIndex, expenseId, updatedData, updateFuture = false) => {
+    const endMonth = updateFuture ? monthsData.length - 1 : monthIndex;
+    for (let m = monthIndex; m <= endMonth; m++) {
+      updateMonthData(m, (month) => ({
+        ...month,
+        fixedExpenses: month.fixedExpenses.map(e => e.id === expenseId ? { ...e, ...updatedData } : e)
+      }));
+    }
+  };
+
+  const addInstallmentExpense = (monthIndex, expense, installments) => {
+    const baseId = `inst-${Date.now()}`;
+    const amountPerMonth = expense.amount / installments;
+    for (let i = 0; i < installments; i++) {
+        const targetMonth = monthIndex + i;
+        if (targetMonth < monthsData.length) {
+            updateMonthData(targetMonth, (month) => ({
+                ...month,
+                fixedExpenses: [...month.fixedExpenses, { 
+                    id: `${baseId}-${i+1}`, 
+                    name: `${expense.description} (Cuota ${i+1}/${installments})`, 
+                    amount: amountPerMonth,
+                    accountId: expense.accountId || 'cash',
+                    isInstallment: true,
+                    originalAmount: expense.amount
+                }]
+            }));
+        }
+    }
+  };
+
   const calculateMonthStats = (globalMonthIndex) => {
     if (monthsData.length === 0) return null;
     const monthData = monthsData[globalMonthIndex];
@@ -291,6 +381,7 @@ export const useFinance = () => {
     accounts.forEach(acc => {
       const settings = accountSettings[acc.id] || { initialBalance: 0 };
       let balance = Number(settings.initialBalance) || 0;
+      let spentThisMonth = 0;
       
       // Aggregate all changes up to this month
       for (let m = 0; m <= globalMonthIndex; m++) {
@@ -299,18 +390,113 @@ export const useFinance = () => {
         balance += (mData.accountAdjustments?.[acc.id] || 0);
         
         // 2. Variable Expenses
-        mData.variableExpenses?.filter(e => e.accountId === acc.id).forEach(e => balance -= e.amount);
+        mData.variableExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+            balance -= e.amount;
+            if (m === globalMonthIndex) spentThisMonth += e.amount;
+        });
         
-        // 3. Fixed Payments (If explicitly linked, but here they are global. Let's assume cash for now if not specified)
-        // For simplicity in this logic, only variable expenses and adjustments affect balances.
+        // 3. Paid Fixed Expenses
+        mData.fixedExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+            const p = mData.payments?.[e.id];
+            if (p && p.amountPaid > 0) {
+                balance -= p.amountPaid;
+                if (m === globalMonthIndex) spentThisMonth += p.amountPaid;
+            }
+        });
       }
       
+      const limit = Number(settings.limit) || 0;
+      const closingDay = acc.closingDay || 0;
+      let statementBalance = 0;
+
+      // Calculate Statement Balance (only for credit cards with a closing day)
+      if (acc.type === 'credit' && closingDay > 0) {
+        // Logic: Components of the bill due next (e.g., if we are in March, bill due early April)
+        // 1. Expenses from PREVIOUS month AFTER its closing day
+        if (globalMonthIndex > 0) {
+          const prevMonth = monthsData[globalMonthIndex - 1];
+          // Prev month variable
+          prevMonth.variableExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+            if (e.date) {
+              const day = new Date(e.date).getDate();
+              if (day > closingDay) statementBalance -= e.amount;
+            }
+          });
+          // Prev month fixed
+          prevMonth.fixedExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+            const p = prevMonth.payments?.[e.id];
+            if (p && p.amountPaid > 0 && p.date) {
+              const day = new Date(p.date).getDate();
+              if (day > closingDay) statementBalance -= p.amountPaid;
+            }
+          });
+        }
+        // 2. Expenses from CURRENT month BEFORE or ON its closing day
+        const currMonth = monthsData[globalMonthIndex];
+        currMonth.variableExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+          if (e.date) {
+            const day = new Date(e.date).getDate();
+            if (day <= closingDay) statementBalance -= e.amount;
+          }
+        });
+        currMonth.fixedExpenses?.filter(e => e.accountId === acc.id).forEach(e => {
+          const p = currMonth.payments?.[e.id];
+          if (p && p.amountPaid > 0 && p.date) {
+            const day = new Date(p.date).getDate();
+            if (day <= closingDay) statementBalance -= p.amountPaid;
+          }
+        });
+      }
+
       accountBalances[acc.id] = {
         ...acc,
         balance,
-        limit: settings.limit || 0
+        statementBalance: acc.type === 'credit' ? statementBalance : balance,
+        limit,
+        spent: spentThisMonth,
+        available: limit + balance 
       };
     });
+
+    // Add explicit Savings Goals to their designated Vaults
+    const goalMetadata = monthsData[0]?.goalMetadata || {};
+    Object.keys(goalMetadata).forEach(goalKey => {
+      let totalUserSaved = 0;
+      let totalPartnerSaved = 0;
+      let lastUserVault = null;
+      let lastPartnerVault = null;
+
+      for (let m = 0; m <= globalMonthIndex; m++) {
+        const mData = monthsData[m];
+        if (mData.savingsPayments && mData.savingsPayments[goalKey]) {
+          const payment = mData.savingsPayments[goalKey];
+          
+          if (Number(payment.userPaid) > 0) {
+            totalUserSaved += Number(payment.userPaid);
+            if (payment.userDestAccountId) lastUserVault = payment.userDestAccountId;
+          }
+          if (Number(payment.partnerPaid) > 0) {
+            totalPartnerSaved += Number(payment.partnerPaid);
+            if (payment.partnerDestAccountId) lastPartnerVault = payment.partnerDestAccountId;
+            else if (payment.userDestAccountId) lastPartnerVault = payment.userDestAccountId; // Fallback to user's
+          }
+        }
+      }
+
+      // If user selected a vault during payment, use it. Otherwise, fallback to GoalTracker setting.
+      const meta = goalMetadata[goalKey];
+      const targetUserVaultId = lastUserVault || meta.accountId;
+      const targetPartnerVaultId = lastPartnerVault || meta.accountId;
+
+      if (targetUserVaultId && accountBalances[targetUserVaultId]) {
+         accountBalances[targetUserVaultId].balance += totalUserSaved;
+      }
+      if (targetPartnerVaultId && accountBalances[targetPartnerVaultId]) {
+         accountBalances[targetPartnerVaultId].balance += totalPartnerSaved;
+      }
+    });
+
+    // We no longer inject virtual vaults. Goals will be explicitly assigned to real Vaults.
 
     const availableReal = variableBudget - totalVariable;
 
@@ -526,6 +712,11 @@ export const useFinance = () => {
     removeEncargo,
     setupInitialAccounts,
     exportData,
-    restoreFinanceData
+    restoreFinanceData,
+    addFixedExpense,
+    removeFixedExpense,
+    updateFixedExpenseMetadata,
+    updateFixedExpenseAmount,
+    addInstallmentExpense
   };
 };

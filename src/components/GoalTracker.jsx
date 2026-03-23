@@ -225,7 +225,7 @@ const SimulatorCard = ({ goal }) => {
 };
 
 const GoalTracker = ({ stats }) => {
-  const { updateGoalMetadata, addGoal, deleteGoal } = useFinance();
+  const { updateGoalMetadata, addGoal, deleteGoal, accounts } = useFinance();
   const [editingGoal, setEditingGoal] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -236,6 +236,7 @@ const GoalTracker = ({ stats }) => {
     bg: "bg-indigo-50",
     text: "text-indigo-600",
     isShared: true,
+    accountId: "", // The vault account
   });
 
   // Modal State
@@ -268,6 +269,7 @@ const GoalTracker = ({ stats }) => {
       bg: goal.bg || "bg-indigo-50",
       text: goal.textColor || "text-indigo-600",
       isShared: goal.isShared !== false,
+      accountId: goal.accountId || "",
     });
   };
 
@@ -420,6 +422,7 @@ const GoalTracker = ({ stats }) => {
             bg: "bg-indigo-50",
             text: "text-indigo-600",
             isShared: true,
+            accountId: "",
           });
         }}
         className="app-card overflow-hidden p-6 min-h-[16rem] flex flex-col items-center justify-center opacity-70 hover:opacity-100 transition-all cursor-pointer border-2 border-dashed border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
@@ -481,6 +484,26 @@ const GoalTracker = ({ stats }) => {
                     className="w-full glass-input p-4 text-xs font-bold"
                   />
                 </div>
+              </div>
+
+              {/* Vault Selection */}
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">
+                  Bóveda Destino
+                </label>
+                <select
+                  value={editForm.accountId}
+                  onChange={(e) => setEditForm({ ...editForm, accountId: e.target.value })}
+                  className="w-full glass-input p-4 text-xs font-bold"
+                >
+                  <option value="">Selecciona una Bóveda (Opcional)</option>
+                  <optgroup label="Bóvedas Disponibles">
+                    {accounts?.filter(a => a.type === 'vault').map(vault => (
+                      <option key={vault.id} value={vault.id}>{vault.name}</option>
+                    ))}
+                  </optgroup>
+                </select>
+                <p className="text-[9px] text-slate-400 font-bold px-1 mt-1">El ahorro sumará saldo a esta cuenta.</p>
               </div>
 
               {/* Shared Toggle */}

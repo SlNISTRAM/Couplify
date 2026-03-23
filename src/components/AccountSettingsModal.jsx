@@ -4,7 +4,7 @@ import { useFinance } from '../hooks/useFinance';
 import { useToast } from '../hooks/useContexts';
 import { ACCOUNTS } from '../utils/constants';
 
-const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMonthIndex }) => {
+const AccountSettingsModal = ({ isOpen, onClose, selectedAccountId, accountBalances = {}, currentMonthIndex }) => {
   const { monthsData, updateAccountSettings, accounts, addAccount, deleteAccount, updateAccount, reorderAccount, updateAccountAdjustment, resetMonthCarryover } = useFinance();
   const { showToast } = useToast();
   
@@ -13,20 +13,27 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
   const [syncValues, setSyncValues] = useState({}); // Stores the "Real Balance" input
   const [isAdding, setIsAdding] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [newAcc, setNewAcc] = useState({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '' });
+  const [newAcc, setNewAcc] = useState({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '', closingDay: '' });
 
   // Pattern: Adjust state during render to avoid useEffect set-state-in-effect
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
     if (isOpen) {
+      if (selectedAccountId === 'new') {
+        setIsAdding(true);
+      } else {
+        setIsAdding(false);
+      }
+      
       const initial = {};
       accounts.forEach(acc => {
         initial[acc.id] = {
           name: acc.name,
           initialBalance: currentSettings[acc.id]?.initialBalance || 0,
           limit: currentSettings[acc.id]?.limit || 0,
-          dueDate: acc.dueDate || ''
+          dueDate: acc.dueDate || '',
+          closingDay: acc.closingDay || ''
         };
       });
       setSettings(initial);
@@ -52,6 +59,7 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
         const updates = {};
         if (data.name !== originalAcc.name) updates.name = data.name;
         if (data.dueDate !== originalAcc.dueDate) updates.dueDate = data.dueDate ? parseInt(data.dueDate) : null;
+        if (data.closingDay !== originalAcc.closingDay) updates.closingDay = data.closingDay ? parseInt(data.closingDay) : null;
         
         if (Object.keys(updates).length > 0) {
           updateAccount(id, updates);
@@ -90,10 +98,12 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
       type: newAcc.type,
       currency: newAcc.currency,
       icon: newAcc.type === 'credit' ? 'CreditCard' : newAcc.type === 'vault' ? 'PiggyBank' : 'Wallet',
-      color: newAcc.type === 'credit' ? 'text-rose-500' : newAcc.type === 'vault' ? 'text-purple-500' : 'text-blue-500'
+      color: newAcc.type === 'credit' ? 'text-rose-500' : newAcc.type === 'vault' ? 'text-purple-500' : 'text-blue-500',
+      dueDate: newAcc.dueDate ? parseInt(newAcc.dueDate) : null,
+      closingDay: newAcc.closingDay ? parseInt(newAcc.closingDay) : null
     };
     addAccount(accountData);
-    setNewAcc({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '' });
+    setNewAcc({ name: '', type: 'debit', currency: 'PEN', limit: 0, initialBalance: 0, dueDate: '', closingDay: '' });
     setIsAdding(false);
     showToast('Cuenta añadida', 'success');
   };
@@ -133,7 +143,9 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                 <Wallet size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-none">Configurar Cuentas</h3>
+                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
+                  {selectedAccountId === 'new' ? 'Nueva Cuenta' : (selectedAccountId ? 'Editar Cuenta' : 'Configurar Cuentas')}
+                </h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Saldos iniciales y límites</p>
               </div>
             </div>
@@ -155,7 +167,7 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
           </div>
 
           <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {accounts.map(acc => (
+            {(selectedAccountId && selectedAccountId !== 'new' ? accounts.filter(a => a.id === selectedAccountId) : (selectedAccountId === 'new' ? [] : accounts)).map(acc => (
               <div key={acc.id} className={`p-4 rounded-2xl border transition-all relative group ${acc.hidden ? 'bg-slate-100/50 dark:bg-slate-900/30 border-dashed border-slate-200 dark:border-slate-800 opacity-60' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800'}`}>
                 <div className="flex justify-between items-center mb-2 px-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre de la Cuenta</label>
@@ -265,6 +277,24 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                         </div>
                       </div>
                       <div>
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block px-1">Fecha de Corte</label>
+                        <div className="relative">
+                          <input 
+                            type="number"
+                            min="1"
+                            max="31"
+                            value={settings[acc.id]?.closingDay || ''}
+                            onChange={e => setSettings({
+                              ...settings,
+                              [acc.id]: { ...settings[acc.id], closingDay: e.target.value }
+                            })}
+                            className="w-full bg-white dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-black focus:ring-2 ring-indigo-500 transition-all dark:text-white"
+                            placeholder="Ej: 7"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Corte</span>
+                        </div>
+                      </div>
+                      <div>
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block px-1">Día de Pago</label>
                         <div className="relative">
                           <input 
@@ -277,9 +307,9 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                               [acc.id]: { ...settings[acc.id], dueDate: e.target.value }
                             })}
                             className="w-full bg-white dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-black focus:ring-2 ring-indigo-500 transition-all dark:text-white"
-                            placeholder="Ej: 15"
+                            placeholder="Ej: 28"
                           />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Cada mes</span>
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Pago</span>
                         </div>
                       </div>
                     </div>
@@ -417,17 +447,31 @@ const AccountSettingsModal = ({ isOpen, onClose, accountBalances = {}, currentMo
                     </div>
                   </div>
                   {newAcc.type === 'credit' && (
-                    <div className="flex flex-col space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Día de Pago</label>
-                      <input 
-                        type="number"
-                        min="1"
-                        max="31"
-                        placeholder="Día (1-31)"
-                        value={newAcc.dueDate}
-                        onChange={e => setNewAcc({...newAcc, dueDate: e.target.value})}
-                        className="w-full bg-white dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 ring-indigo-500 dark:text-white"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Día de Corte</label>
+                        <input 
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Corte (1-31)"
+                          value={newAcc.closingDay}
+                          onChange={e => setNewAcc({...newAcc, closingDay: e.target.value})}
+                          className="w-full bg-white dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 ring-indigo-500 dark:text-white"
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Día de Pago</label>
+                        <input 
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Pago (1-31)"
+                          value={newAcc.dueDate}
+                          onChange={e => setNewAcc({...newAcc, dueDate: e.target.value})}
+                          className="w-full bg-white dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 ring-indigo-500 dark:text-white"
+                        />
+                      </div>
                     </div>
                   )}
 

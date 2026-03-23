@@ -2,7 +2,18 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirmar", cancelText = "Cancelar", type = "danger" }) => {
+const ConfirmModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  onConfirmSecondary,
+  title, 
+  message, 
+  confirmText = "Confirmar", 
+  confirmTextSecondary,
+  cancelText = "Cancelar", 
+  type = "danger" 
+}) => {
   if (!isOpen) return null;
   // Use Portal for Modals too
   if (typeof document === 'undefined') return null;
@@ -58,6 +69,17 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
           </p>
           
           <div className="mt-8 flex flex-col space-y-3">
+            {confirmTextSecondary && onConfirmSecondary && (
+              <button
+                onClick={() => {
+                  onConfirmSecondary();
+                  onClose();
+                }}
+                className={`w-full py-4 rounded-2xl text-indigo-600 dark:text-indigo-400 font-black text-sm transition-all active:scale-95 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40`}
+              >
+                {confirmTextSecondary}
+              </button>
+            )}
             <button
               onClick={() => {
                 onConfirm();

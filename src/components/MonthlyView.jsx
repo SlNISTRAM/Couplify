@@ -35,6 +35,7 @@ import {
   CreditCard,
   Gift,
   Banknote,
+  Shield,
   ShoppingBag,
   Target,
   Receipt,
@@ -44,15 +45,7 @@ import {
   Copy,
   ChevronDown as ChevronIcon,
   Clock,
-  ChevronRight, // Added from new imports
-  ArrowUpRight, // Added from new imports
-  ArrowDownRight, // Added from new imports
-  CheckCircle2, // Added from new imports
-  AlertCircle, // Added from new imports
-  MoreVertical, // Added from new imports
-  Edit2, // Added from new imports
-  Search, // Added from new imports
-  ArrowRight // Added from new imports
+  AlertCircle
 } from "lucide-react";
 import { EXPENSE_CATEGORIES, ACCOUNTS } from "../utils/constants";
 import ExpenseCharts from "./ExpenseCharts";
@@ -67,6 +60,7 @@ const AccountSelector = ({
   size = "sm",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [view, setView] = useState('main'); // 'main' or 'vaults'
   const selectedAccount = accounts.find((a) => a.id === value) || accounts[0];
   const Icon = selectedAccount?.type === 'vault'
     ? PiggyBank
@@ -84,7 +78,7 @@ const AccountSelector = ({
       if (isOpen && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        const dropdownHeight = 300;
+        const dropdownHeight = 320;
 
         setDropUp(spaceBelow < dropdownHeight);
         setCoords({
@@ -93,6 +87,7 @@ const AccountSelector = ({
           left: rect.left,
           width: rect.width
         });
+        setView('main');
       }
     }, [isOpen]);
 
@@ -152,52 +147,125 @@ const AccountSelector = ({
               )
             }}
           >
-            {accounts
-              .filter((acc) => !acc.hidden || acc.id === value)
-              .map((acc) => {
-                const AccIcon =
-                  acc.id === "cash"
-                    ? Banknote
-                    : acc.id?.includes("bank")
-                      ? Wallet
-                      : CreditCard;
-                const isSelected = acc.id === value;
-                return (
+            {view === 'main' ? (
+              <>
+                {accounts
+                  .filter((acc) => acc.type !== 'vault' && (!acc.hidden || acc.id === value))
+                  .map((acc) => {
+                    const AccIcon =
+                      acc.id === "cash"
+                        ? Banknote
+                        : acc.id?.includes("bank")
+                          ? Wallet
+                          : CreditCard;
+                    const isSelected = acc.id === value;
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onChange(acc.id);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                          isSelected
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                            : `hover:bg-slate-50 dark:hover:bg-slate-700 ${acc.hidden ? 'text-slate-400 opacity-60' : 'text-slate-600 dark:text-slate-300'}`
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <AccIcon
+                            size={16}
+                            className={
+                              isSelected
+                                ? "text-white"
+                                : acc.id === "cash"
+                                  ? "text-emerald-500"
+                                  : "text-indigo-500"
+                            }
+                          />
+                          <span className="text-xs font-black uppercase tracking-tight text-left">
+                            {acc.name}
+                            {acc.hidden && <span className="ml-2 text-[9px] opacity-50">(Oculta)</span>}
+                          </span>
+                        </div>
+                        {isSelected && <Check size={14} />}
+                      </button>
+                    );
+                  })}
+                
+                {accounts.some(acc => acc.type === 'vault') && (
                   <button
-                    key={acc.id}
                     type="button"
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onChange(acc.id);
-                      setIsOpen(false);
+                      setView('vaults');
                     }}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
-                      isSelected
-                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
-                        : `hover:bg-slate-50 dark:hover:bg-slate-700 ${acc.hidden ? 'text-slate-400 opacity-60' : 'text-slate-600 dark:text-slate-300'}`
-                    }`}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 mt-2 border border-dashed border-purple-200 dark:border-purple-800/50`}
                   >
                     <div className="flex items-center gap-3">
-                      <AccIcon
-                        size={16}
-                        className={
-                          isSelected
-                            ? "text-white"
-                            : acc.id === "cash"
-                              ? "text-emerald-500"
-                              : "text-indigo-500"
-                        }
-                      />
+                      <Shield size={16} />
                       <span className="text-xs font-black uppercase tracking-tight text-left">
-                        {acc.name}
-                        {acc.hidden && <span className="ml-2 text-[9px] opacity-50">(Oculta)</span>}
+                        Mis Bóvedas
                       </span>
                     </div>
-                    {isSelected && <Check size={14} />}
+                    <ChevronDown size={14} className="-rotate-90" />
                   </button>
-                );
-              })}
+                )}
+              </>
+            ) : (
+              <div className="animate-in slide-in-from-right-2 duration-200">
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setView('main');
+                  }}
+                  className="w-full flex items-center gap-2 p-2 mb-2 text-slate-400 hover:text-indigo-500 transition-colors border-b border-slate-100 dark:border-slate-800 pb-3"
+                >
+                  <ChevronDown size={14} className="rotate-90" />
+                  <span className="text-[10px] font-black uppercase tracking-widest italic">Regresar</span>
+                </button>
+                
+                {accounts
+                  .filter(acc => acc.type === 'vault')
+                  .map((acc) => {
+                    const isSelected = acc.id === value;
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onChange(acc.id);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all mb-1 ${
+                          isSelected
+                            ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
+                            : `hover:bg-purple-50 dark:hover:bg-purple-900/20 text-slate-600 dark:text-slate-300`
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <PiggyBank
+                            size={16}
+                            className={isSelected ? "text-white" : "text-purple-500"}
+                          />
+                          <span className="text-xs font-black uppercase tracking-tight text-left">
+                            {acc.name}
+                          </span>
+                        </div>
+                        {isSelected && <Check size={14} />}
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>,
         document.body
@@ -229,7 +297,6 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     updateVariableExpense,
     calculateMonthStats,
     restoreFixedExpense,
-    moveFixedExpense,
     updateFixedExpenseMetadata,
     getExpenseDistribution,
     accounts,
@@ -286,14 +353,20 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     }
   }, [monthsData, accounts, userName]);
 
-  const [captureValue, setCaptureValue] = useState(null);
   const [newFixedExpense, setNewFixedExpense] = useState({
     name: "",
     amount: "",
     accountId: "bank",
+    dueDate: "",
   });
   const [isLimited, setIsLimited] = useState(false);
   const [untilMonth, setUntilMonth] = useState(currentMonthIndex);
+  const [editingFixedId, setEditingFixedId] = useState(null);
+  const [payingFixedId, setPayingFixedId] = useState(null);
+  const [payingFixedSource, setPayingFixedSource] = useState(null);
+  const [payingFixedView, setPayingFixedView] = useState('main'); // 'main' or 'vaults'
+  const [originalExpense, setOriginalExpense] = useState(null);
+  const [expandedFixedId, setExpandedFixedId] = useState(null);
   const [unlockedExpenses, setUnlockedExpenses] = useState({}); // Tracking which rows are unlocked
 
   const [newExpense, setNewExpense] = useState({
@@ -327,6 +400,8 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     message: "",
     confirmText: "",
     onConfirm: () => {},
+    onConfirmSecondary: null,
+    confirmTextSecondary: "",
     type: "danger",
   });
 
@@ -343,6 +418,8 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
 
   // Savings Update Confirmation State
   const [pendingUpdate, setPendingUpdate] = useState(null); // { type, isPartner, amount }
+  const [editingVariableId, setEditingVariableId] = useState(null);
+  const [originalVariableExpense, setOriginalVariableExpense] = useState(null);
   const [uiVersion, setUiVersion] = useState(0);
 
   const [newIncome, setNewIncome] = useState({
@@ -350,6 +427,118 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
     amount: "",
     accountId: "bank",
   });
+
+  const editCardRef = useRef(null);
+  const fixedCardRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // 1. Variable Expense Detection
+      if (editingVariableId && editCardRef.current && !editCardRef.current.contains(e.target)) {
+        if (confirmConfig.isOpen) return;
+
+        const currentMonthData = monthsData?.[currentMonthIndex];
+        const currentExpense = currentMonthData?.variableExpenses?.find(ex => ex.id === editingVariableId);
+        if (!currentExpense || !originalVariableExpense) return;
+
+        const hasChanges = 
+          currentExpense.description !== originalVariableExpense.description ||
+          currentExpense.amount !== originalVariableExpense.amount ||
+          currentExpense.category !== originalVariableExpense.category ||
+          currentExpense.accountId !== originalVariableExpense.accountId ||
+          (currentExpense.date && originalVariableExpense.date && 
+           new Date(currentExpense.date).getTime() !== new Date(originalVariableExpense.date).getTime());
+
+        if (hasChanges) {
+          setConfirmConfig({
+            isOpen: true,
+            title: "Cambios sin guardar",
+            message: `Has realizado cambios en "${currentExpense.description}". ¿Deseas guardarlos antes de salir?`,
+            confirmText: "Guardar",
+            confirmTextSecondary: "Descartar",
+            type: "warning",
+            onConfirm: () => {
+              setEditingVariableId(null);
+              setOriginalVariableExpense(null);
+              showToast("Cambios guardados", "success");
+              closeConfirm();
+            },
+            onConfirmSecondary: () => {
+              updateVariableExpense(currentMonthIndex, editingVariableId, { ...originalVariableExpense });
+              setEditingVariableId(null);
+              setOriginalVariableExpense(null);
+              showToast("Cambios descartados", "info");
+              closeConfirm();
+            }
+          });
+        } else {
+          setEditingVariableId(null);
+          setOriginalVariableExpense(null);
+        }
+      }
+
+      // 2. Fixed Expense Detection
+      if (expandedFixedId && fixedCardRef.current && !fixedCardRef.current.contains(e.target)) {
+        if (confirmConfig.isOpen) return;
+
+        const currentMonthData = monthsData?.[currentMonthIndex];
+        const currentExpense = currentMonthData?.fixedExpenses?.find(ex => ex.id === expandedFixedId);
+        const currentPayment = currentMonthData?.payments?.[expandedFixedId];
+        
+        if (!currentExpense || !originalExpense) return;
+
+        const hasChanges = 
+          currentExpense.name !== originalExpense.name ||
+          currentExpense.amount !== originalExpense.amount ||
+          currentExpense.dueDate !== originalExpense.dueDate ||
+          currentExpense.accountId !== originalExpense.accountId ||
+          (currentPayment?.amountPaid !== originalExpense.amountPaid);
+
+        if (hasChanges) {
+          setConfirmConfig({
+            isOpen: true,
+            title: "Cambios sin guardar",
+            message: `Has realizado cambios en "${currentExpense.name}". ¿Deseas guardarlos antes de salir?`,
+            confirmText: "Guardar",
+            confirmTextSecondary: "Descartar",
+            type: "warning",
+            onConfirm: () => {
+              setExpandedFixedId(null);
+              setOriginalExpense(null);
+              showToast("Cambios guardados", "success");
+              closeConfirm();
+            },
+            onConfirmSecondary: () => {
+              // Revert metadata
+              updateFixedExpenseMetadata(currentMonthIndex, expandedFixedId, { 
+                name: originalExpense.name,
+                dueDate: originalExpense.dueDate,
+                accountId: originalExpense.accountId
+              }, true);
+              updateFixedExpenseAmount(currentMonthIndex, expandedFixedId, originalExpense.amount, true);
+              // Revert payment
+              updateFixedPayment(currentMonthIndex, expandedFixedId, originalExpense.amountPaid);
+              
+              setExpandedFixedId(null);
+              setOriginalExpense(null);
+              showToast("Cambios descartados", "info");
+              closeConfirm();
+            }
+          });
+        } else {
+          setExpandedFixedId(null);
+          setOriginalExpense(null);
+        }
+      }
+    };
+
+    if (editingVariableId || expandedFixedId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editingVariableId, expandedFixedId, originalVariableExpense, originalExpense, monthsData, currentMonthIndex, confirmConfig.isOpen]);
 
   // 2. Conditional Returns (After all hooks)
 
@@ -395,7 +584,7 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
   const dynamicStats = stats;
 
   const closeConfirm = () =>
-    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false, onConfirmSecondary: null, confirmTextSecondary: "" }));
   const forceInputReset = () => setUiVersion((v) => v + 1);
 
   const handleAddExpense = (e) => {
@@ -455,11 +644,13 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
       {
         name: newFixedExpense.name,
         amount: parseFloat(newFixedExpense.amount),
+        accountId: newFixedExpense.accountId,
+        dueDate: newFixedExpense.dueDate ? parseInt(newFixedExpense.dueDate) : null,
       },
       isLimited ? parseInt(untilMonth) : null,
     );
     showToast(`Pago fijo añadido: ${newFixedExpense.name}`, "success");
-    setNewFixedExpense({ name: "", amount: "", accountId: "bank" });
+    setNewFixedExpense({ name: "", amount: "", accountId: "bank", dueDate: "" });
     setIsLimited(false);
   };
 
@@ -1224,268 +1415,454 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
               </div>
             </div>
 
-            <div className="app-card divide-y divide-slate-50 dark:divide-slate-800 shadow-sm">
+            <div className="app-card shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
+              <div className="divide-y divide-slate-50 dark:divide-slate-800">
               {[...monthData.fixedExpenses]
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((expense, idx, arr) => {
+                .map((expense) => {
+                  const isEditing = editingFixedId === expense.id;
+                  const isExpanded = expandedFixedId === expense.id;
                   const payment = monthData.payments[expense.id];
                   const isPaid = payment?.completed;
+                  const acc = accounts.find(a => a.id === (expense.accountId || 'bank'));
 
                   return (
                     <div
                       key={expense.id}
-                      className={`relative flex items-center justify-between p-4 transition-all z-1 focus-within:z-[100] ${isPaid ? "bg-emerald-50/20 dark:bg-emerald-900/10" : ""}`}
+                      className={`relative flex flex-col transition-all ${isPaid ? "bg-emerald-50/10 dark:bg-emerald-900/5" : ""}`}
                     >
-                      <div className="flex items-center space-x-4">
-                        {/* Order Controls */}
-                        <div className="flex flex-col -space-y-1">
-                          <button
-                            onClick={() => moveFixedExpense(expense.id, "up")}
-                            disabled={idx === 0}
-                            className={`p-0.5 rounded transition-colors ${idx === 0 ? "text-slate-200" : "text-slate-400 hover:bg-slate-100 hover:text-indigo-500"}`}
-                          >
-                            <ChevronUp size={14} />
-                          </button>
-                          <button
-                            onClick={() => moveFixedExpense(expense.id, "down")}
-                            disabled={idx === arr.length - 1}
-                            className={`p-0.5 rounded transition-colors ${idx === arr.length - 1 ? "text-slate-200" : "text-slate-400 hover:bg-slate-100 hover:text-indigo-500"}`}
-                          >
-                            <ChevronDown size={14} />
-                          </button>
-                        </div>
+                      <div className="group">
+                        {/* Main row – always visible */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          ref={isExpanded ? fixedCardRef : null}
+                          className={`w-full flex items-center px-4 py-3.5 gap-3 text-left transition-colors cursor-pointer ${isExpanded ? "bg-slate-50 dark:bg-slate-800/60" : "hover:bg-slate-50/60 dark:hover:bg-slate-800/30"}`}
+                          onClick={() => {
+                            if (!isExpanded) {
+                              setOriginalExpense({ 
+                                ...expense, 
+                                amountPaid: payment?.amountPaid || 0 
+                              });
+                            }
+                            setExpandedFixedId(isExpanded ? null : expense.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              if (!isExpanded) {
+                                setOriginalExpense({ 
+                                  ...expense, 
+                                  amountPaid: payment?.amountPaid || 0 
+                                });
+                              }
+                              setExpandedFixedId(isExpanded ? null : expense.id);
+                            }
+                          }}
+                        >
+                            {/* Checkbox / Quick Pay Trigger */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isPaid) {
+                                    updateFixedPayment(currentMonthIndex, expense.id, 0);
+                                    showToast("Pago desmarcado", "info");
+                                  } else {
+                                    setPayingFixedId(expense.id);
+                                    setPayingFixedSource(null);
+                                    setPayingFixedView('main');
+                                  }
+                                }}
+                                className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                                  isPaid
+                                    ? "border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
+                                    : "border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                                }`}
+                              >
+                                {isPaid && <Check size={14} />}
+                              </button>
 
-                        <div className="flex flex-col items-center">
-                          <button
-                            onClick={() => {
-                              updateFixedPayment(
-                                currentMonthIndex,
-                                expense.id,
-                                isPaid ? 0 : expense.amount,
+                              {/* Quick Pay Account Selector Popover */}
+                              {!isPaid && payingFixedId === expense.id && (
+                                <div className="absolute left-0 top-9 z-[100] animate-scale-in bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 min-w-[220px]">
+                                  {payingFixedSource ? (
+                                    <div className="space-y-2 p-1">
+                                      <p className="text-[10px] font-black text-slate-500 uppercase px-2">¿Pagar con {payingFixedSource.name}?</p>
+                                      <div className="flex gap-2">
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // 1. Update metadata to make it persistent for future months
+                                            updateFixedExpenseMetadata(currentMonthIndex, expense.id, { accountId: payingFixedSource.id }, true);
+                                            // 2. Mark as paid
+                                            updateFixedPayment(currentMonthIndex, expense.id, expense.amount);
+                                            setPayingFixedId(null);
+                                            setPayingFixedSource(null);
+                                            setPayingFixedView('main');
+                                            showToast(`Pagado con ${payingFixedSource.name} ✓`, "success");
+                                          }}
+                                          className="flex-1 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase rounded-xl shadow-md shadow-emerald-500/20"
+                                        >
+                                          Confirmar
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); setPayingFixedSource(null); }}
+                                          className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-black uppercase rounded-xl"
+                                        >
+                                          Cambiar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {/* Using a local view state here or just filtering? 
+                                          Since we are inside a map, using a persistent view state for all popovers is tricky.
+                                          Let's use a simple sub-view logic if possible or just filter vaults.
+                                      */}
+                                      {payingFixedView === 'main' ? (
+                                        <>
+                                          <div className="flex justify-between items-center px-2 py-1">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase">Selecciona Pago</p>
+                                            <button onClick={(e) => { e.stopPropagation(); setPayingFixedId(null); }} className="text-slate-400 hover:text-rose-500"><X size={12}/></button>
+                                          </div>
+                                          {accounts.filter(a => a.id !== 'cash' && a.type !== 'vault' && !a.hidden).map(acc => (
+                                            <button 
+                                              key={acc.id}
+                                              onClick={(e) => { e.stopPropagation(); setPayingFixedSource(acc); }}
+                                              className="w-full flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                            >
+                                              {acc.type === 'credit' ? (
+                                                <CreditCard size={12} className="text-rose-500" />
+                                              ) : (
+                                                <Wallet size={12} className="text-indigo-500" />
+                                              )}
+                                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{acc.name}</span>
+                                            </button>
+                                          ))}
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); setPayingFixedSource({ id: 'cash', name: 'Efectivo' }); }}
+                                            className="w-full flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                          >
+                                            <Banknote size={12} className="text-emerald-500" />
+                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Efectivo</span>
+                                          </button>
+                                          {accounts.some(a => a.type === 'vault') && (
+                                            <button 
+                                              onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setPayingFixedView('vaults');
+                                              }}
+                                              className="w-full flex items-center justify-between p-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors text-purple-600 dark:text-purple-400 border border-dashed border-purple-200 dark:border-purple-800/50 mt-1"
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <Shield size={12} />
+                                                <span className="text-[10px] font-black uppercase">Mis Bóvedas</span>
+                                              </div>
+                                              <ChevronDown size={10} className="-rotate-90 text-purple-400" />
+                                            </button>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <div className="animate-in slide-in-from-right-2 duration-200 min-w-[220px]">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setPayingFixedView('main');
+                                            }}
+                                            className="w-full flex items-center gap-2 p-2 mb-1 text-slate-400 hover:text-indigo-500 transition-colors border-b border-slate-100 dark:border-slate-800 pb-2"
+                                          >
+                                            <ChevronDown size={12} className="rotate-90" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest italic">Regresar</span>
+                                          </button>
+                                          {accounts.filter(a => a.type === 'vault').map(acc => (
+                                            <button 
+                                              key={acc.id}
+                                              onClick={(e) => { e.stopPropagation(); setPayingFixedSource(acc); }}
+                                              className="w-full flex items-center gap-3 p-2.5 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors"
+                                            >
+                                              <PiggyBank size={14} className="text-purple-500" />
+                                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{acc.name}</span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Name and Paid info */}
+                            <div className="flex-1 flex flex-col min-w-0">
+                              <span className={`text-sm font-bold leading-tight ${isPaid ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-700 dark:text-slate-200"}`}>
+                                {expense.name}
+                              </span>
+                              {isPaid && (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest italic">
+                                    Pagado con {accounts.find(a => a.id === expense.accountId)?.name || 'Efectivo'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Due date chip – always visible if set */}
+                            {expense.dueDate && (() => {
+                              const today = new Date();
+                              const currentDay = today.getDate();
+                              const daysUntil = expense.dueDate - currentDay;
+                              
+                              let chipClass = "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500";
+                              let icon = <CalendarIcon size={10} />;
+                              let label = `Vence ${expense.dueDate}`;
+
+                              if (!isPaid) {
+                                if (daysUntil < 0) {
+                                  chipClass = "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 animate-pulse-subtle";
+                                  icon = <AlertTriangle size={10} />;
+                                  label = `Vencido (${expense.dueDate})`;
+                                } else if (daysUntil <= 3) {
+                                  chipClass = "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30";
+                                  icon = <AlertTriangle size={10} />;
+                                }
+                              }
+
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black flex-shrink-0 transition-colors ${chipClass}`}>
+                                  {icon}
+                                  {label}
+                                </span>
                               );
-                              showToast(
-                                isPaid ? "Pago desmarcado" : "Pago registrado",
-                                "info",
-                              );
-                            }}
-                            className={`p-1 rounded-full border-2 transition-all ${isPaid ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent hover:border-indigo-400"}`}
-                          >
-                            <CheckCircle
-                              size={20}
-                              className={isPaid ? "opacity-100" : "opacity-0"}
+                            })()}
+
+                            {/* Amount */}
+                            <span className={`text-sm font-black flex-shrink-0 ${
+                              isPaid ? "text-emerald-500" : "text-slate-700 dark:text-slate-200"
+                            }`}>
+                              S/ {expense.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </span>
+
+                            {/* Expand chevron */}
+                            <ChevronDown
+                              size={15}
+                              className={`flex-shrink-0 text-slate-300 dark:text-slate-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
                             />
-                          </button>
-                          {isPaid && (
-                            <div className="mt-1">
-                              <DateTimeSelector 
-                                value={payment?.date}
-                                onChange={(newDate) => updateFixedPayment(currentMonthIndex, expense.id, payment?.amountPaid, newDate)}
+                          </div>
+
+                          {/* Expanded details */}
+                          {isExpanded && (
+                            <div className="px-4 pb-4 pt-1 space-y-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800">
+                              {/* Meta info row – account + payment date (when paid) */}
+                              <div className="flex flex-wrap gap-2">
+                                {acc && (
+                                  <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                    <CreditCard size={11} className="text-indigo-400" />
+                                    <span>{acc.name}</span>
+                                  </span>
+                                )}
+                                {isPaid && payment?.date && (
+                                  <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-900/30 text-[10px] font-bold text-emerald-600">
+                                    <Check size={11} />
+                                    <span>Pagado</span>
+                                    <DateTimeSelector 
+                                      value={payment.date}
+                                      onChange={(newDate) => updateFixedPayment(currentMonthIndex, expense.id, payment?.amountPaid, newDate)}
+                                      size="xs"
+                                      color="emerald"
+                                      showLabel={false}
+                                    />
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Name and Paid info */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nombre / Concepto</label>
+                                <input
+                                  type="text"
+                                  value={expense.name}
+                                  onChange={(e) => updateFixedExpenseMetadata(currentMonthIndex, expense.id, { name: e.target.value }, true)}
+                                  className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                {/* Total Amount */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Monto Total</label>
+                                  <div className="flex items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                    <span className="text-[10px] font-black text-slate-400 mr-2">S/</span>
+                                    <input
+                                      type="number"
+                                      value={expense.amount}
+                                      onChange={(e) => updateFixedExpenseAmount(currentMonthIndex, expense.id, parseFloat(e.target.value) || 0, true)}
+                                      className="w-full bg-transparent font-bold text-sm focus:outline-none dark:text-white text-right"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Due Date quick edit */}
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Día Vencimiento</label>
+                                  <div className="flex items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                    <CalendarIcon size={12} className="text-indigo-400 mr-2" />
+                                    <input
+                                      type="number"
+                                      min="1" max="31"
+                                      value={expense.dueDate || ""}
+                                      placeholder="--"
+                                      onChange={(e) => {
+                                        let val = e.target.value === "" ? null : parseInt(e.target.value);
+                                        if (val !== null) val = Math.max(1, Math.min(31, val));
+                                        updateFixedExpenseMetadata(currentMonthIndex, expense.id, { dueDate: val }, true);
+                                      }}
+                                      className="w-full text-center bg-transparent font-bold text-sm focus:outline-none dark:text-white"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Abonado input */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Abonado este mes</label>
+                                <div className="flex items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 border-l-4 border-l-emerald-500">
+                                  <span className="text-[10px] font-black text-slate-400 mr-2">S/</span>
+                                  <input
+                                    type="number"
+                                    value={payment?.amountPaid > 0 ? payment.amountPaid : ""}
+                                    placeholder="0"
+                                    onChange={(e) => updateFixedPayment(currentMonthIndex, expense.id, parseFloat(e.target.value) || 0)}
+                                    className={`flex-1 text-right bg-transparent font-mono font-black text-sm focus:outline-none ${
+                                      isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Account selector */}
+                              <AccountSelector
+                                value={expense.accountId || "bank"}
+                                onChange={(val) => {
+                                  updateFixedExpenseMetadata(currentMonthIndex, expense.id, { accountId: val }, true);
+                                  showToast(`Cuenta actualizada`, "info");
+                                }}
+                                accounts={accounts}
                                 size="xs"
-                                color="emerald"
-                                showLabel={false}
                               />
+
+                              {/* Action buttons */}
+                              <div className="flex items-center justify-end space-x-2 pt-1">
+                                <button
+                                  onClick={() => {
+                                    setConfirmConfig({
+                                      isOpen: true,
+                                      title: "Eliminar Pago",
+                                      message: `¿Deseas eliminar "${expense.name}" solo este mes o de forma definitiva?`,
+                                      confirmText: "Definitivo",
+                                      confirmTextSecondary: "Solo este mes",
+                                      type: "warning",
+                                      onConfirm: () => removeFixedExpense(currentMonthIndex, expense.id, true),
+                                      onConfirmSecondary: () => removeFixedExpense(currentMonthIndex, expense.id, false)
+                                    });
+                                  }}
+                                  className="flex items-center space-x-1.5 px-3 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl text-xs font-black hover:bg-rose-100 transition-all"
+                                >
+                                  <Trash2 size={13} />
+                                  <span>Eliminar</span>
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setExpandedFixedId(null);
+                                    setOriginalExpense(null);
+                                    showToast("Cambios guardados", "success");
+                                  }}
+                                  className="flex items-center space-x-1.5 px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all"
+                                >
+                                  <Check size={13} />
+                                  <span>Guardar</span>
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
-                        <div>
-                          <p
-                            className={`font-bold text-sm ${isPaid ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-700 dark:text-slate-200"}`}
-                          >
-                            {expense.name}
-                          </p>
-                          <div className="flex items-center text-xs text-slate-400">
-                            <span className="mr-1">S/</span>
-                            <input
-                              type="number"
-                              value={expense.amount}
-                              onFocus={(e) =>
-                                setCaptureValue(parseFloat(e.target.value) || 0)
-                              }
-                              onChange={(e) =>
-                                updateFixedExpenseAmount(
-                                  currentMonthIndex,
-                                  expense.id,
-                                  parseFloat(e.target.value) || 0,
-                                  false,
-                                )
-                              }
-                              onBlur={(e) => {
-                                const newValue =
-                                  parseFloat(e.target.value) || 0;
-                                if (
-                                  captureValue !== null &&
-                                  newValue !== captureValue
-                                ) {
-                                  updateFixedExpenseAmount(
-                                    currentMonthIndex,
-                                    expense.id,
-                                    newValue,
-                                    true,
-                                  );
-                                  showToast(
-                                    "Monto actualizado en meses futuros",
-                                    "success",
-                                    {
-                                      label: "SOLO ESTE MES",
-                                      onClick: () => {
-                                        updateFixedExpenseAmount(
-                                          currentMonthIndex,
-                                          expense.id,
-                                          captureValue,
-                                          true,
-                                        );
-                                        updateFixedExpenseAmount(
-                                          currentMonthIndex,
-                                          expense.id,
-                                          newValue,
-                                          false,
-                                        );
-                                        showToast(
-                                          "Cambio aplicado solo a este mes",
-                                          "info",
-                                        );
-                                      },
-                                    },
-                                  );
-                                }
-                                setCaptureValue(newValue);
-                              }}
-                              className="w-16 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-brand-primary focus:outline-none transition-colors"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1 px-1">
-                          <AccountSelector
-                            value={expense.accountId || "bank"}
-                            onChange={(val) => {
-                              updateFixedExpenseMetadata(
-                                currentMonthIndex,
-                                expense.id,
-                                { accountId: val },
-                                true,
-                              );
-                              showToast(
-                                `Pasado a: ${accounts.find((a) => a.id === val)?.name}`,
-                                "info",
-                              );
-                            }}
-                            accounts={accounts}
-                            size="xs"
-                          />
-                        </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="number"
-                          value={
-                            payment.amountPaid > 0 ? payment.amountPaid : ""
-                          }
-                          placeholder={payment.amountPaid}
-                          onChange={(e) => {
-                            updateFixedPayment(
-                              currentMonthIndex,
-                              expense.id,
-                              parseFloat(e.target.value) || 0,
-                            );
-                          }}
-                          onBlur={() => showToast("Monto actualizado", "info")}
-                          className={`w-20 text-right bg-transparent font-mono font-bold text-sm focus:outline-none focus:border-b-2 focus:border-indigo-500 ${isPaid ? "text-emerald-600" : "text-slate-300"}`}
-                        />
-                        <button
-                          onClick={() => {
-                            setConfirmConfig({
-                              isOpen: true,
-                              title: "Eliminar Pago",
-                              message: `¿Estás seguro de que deseas eliminar "${expense.name}" de este mes?`,
-                              confirmText: "Sí, eliminar",
-                              type: "warning",
-                              onConfirm: () => {
-                                removeFixedExpense(
-                                  currentMonthIndex,
-                                  expense.id,
-                                  false,
-                                );
-                                showToast(
-                                  "Pago fijo eliminado de este mes",
-                                  "info",
-                                  {
-                                    label: "ELIMINAR SIEMPRE",
-                                    onClick: () => {
-                                      setConfirmConfig({
-                                        isOpen: true,
-                                        title: "¡Aviso Importante!",
-                                        message: `¿BORRAR PERMANENTEMENTE?\nEsto eliminará "${expense.name}" de todos los meses futuros. Esta acción no se puede deshacer.`,
-                                        confirmText: "Borrar Siempre",
-                                        type: "danger",
-                                        onConfirm: () => {
-                                          removeFixedExpense(
-                                            currentMonthIndex,
-                                            expense.id,
-                                            true,
-                                          );
-                                          showToast(
-                                            "Pago fijo eliminado permanentemente",
-                                            "error",
-                                          );
-                                        },
-                                      });
-                                    },
-                                  },
-                                );
-                              },
-                            });
-                          }}
-                          className="text-slate-300 hover:text-rose-500 transition-colors ml-2"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
                   );
                 })}
+              </div>
 
-              {/* Add New Fixed Expense Form */}
-              <div className="bg-slate-50/50 dark:bg-slate-800/20 p-4">
-                <form
-                  onSubmit={handleAddFixedExpense}
-                  className="flex space-x-2 mb-3"
-                >
+
+            {/* Add New Fixed Expense Form */}
+              <div className="bg-slate-50/80 dark:bg-slate-800/40 px-4 sm:px-6 py-5 rounded-b-2xl border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="p-2 bg-indigo-500 rounded-lg text-white shadow-lg shadow-indigo-500/20">
+                    <Plus size={18} />
+                  </div>
+                  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    Nuevo Pago Fijo
+                  </h4>
+                </div>
+
+                <form onSubmit={handleAddFixedExpense} className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Nuevo pago fijo..."
+                    placeholder="¿Qué estás pagando?"
                     value={newFixedExpense.name}
-                    onChange={(e) =>
-                      setNewFixedExpense({
-                        ...newFixedExpense,
-                        name: e.target.value,
-                      })
-                    }
-                    className="flex-1 bg-white dark:bg-slate-800 px-3 py-2 rounded-xl text-xs border border-slate-100 dark:border-slate-700 focus:ring-1 focus:ring-indigo-500 outline-none dark:text-slate-200"
+                    onChange={(e) => setNewFixedExpense({ ...newFixedExpense, name: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-900 px-4 py-3 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-indigo-500 outline-none dark:text-slate-200 shadow-sm"
                   />
-                  <input
-                    type="number"
-                    placeholder="S/ 0"
-                    value={newFixedExpense.amount}
-                    onChange={(e) =>
-                      setNewFixedExpense({
-                        ...newFixedExpense,
-                        amount: e.target.value,
-                      })
-                    }
-                    className="w-20 bg-white dark:bg-slate-800 px-3 py-2 rounded-xl text-xs border border-slate-100 dark:border-slate-700 focus:ring-1 focus:ring-indigo-500 outline-none text-right dark:text-slate-200 font-bold"
-                  />
-                  <AccountSelector 
-                    value={newFixedExpense.accountId}
-                    onChange={val => setNewFixedExpense({...newFixedExpense, accountId: val})}
-                    accounts={accounts}
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-500/20"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </form>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-sm">
+                      <span className="text-xs font-black text-slate-400 mr-2">S/</span>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={newFixedExpense.amount}
+                        onChange={(e) => setNewFixedExpense({ ...newFixedExpense, amount: e.target.value })}
+                        className="w-full bg-transparent text-sm font-black focus:outline-none text-right dark:text-slate-200"
+                        />
+                      </div>
+                      <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-sm">
+                        <CalendarIcon size={14} className="text-indigo-500 mr-2" />
+                        <input 
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Día"
+                          value={newFixedExpense.dueDate}
+                          onChange={(e) => {
+                            let val = e.target.value;
+                            if (val !== "") {
+                              const numMatch = val.match(/\d+/);
+                              if (numMatch) {
+                                let num = parseInt(numMatch[0]);
+                                num = Math.max(1, Math.min(31, num));
+                                val = num.toString();
+                              }
+                            }
+                            setNewFixedExpense({ ...newFixedExpense, dueDate: val });
+                          }}
+                          className="w-full bg-transparent text-sm font-black text-center focus:outline-none dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-[1fr_80px] gap-3">
+                      <AccountSelector 
+                        value={newFixedExpense.accountId}
+                        onChange={val => setNewFixedExpense({...newFixedExpense, accountId: val})}
+                        accounts={accounts}
+                        size="sm"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newFixedExpense.name || !newFixedExpense.amount}
+                        className="w-full bg-indigo-500 text-white rounded-xl font-black uppercase text-xs hover:bg-indigo-600 disabled:opacity-50 shadow-lg shadow-indigo-500/20"
+                      >
+                        A&ntilde;adir
+                      </button>
+                    </div>
 
                 <div className="flex items-center space-x-4 px-1">
                   <label className="flex items-center space-x-2 cursor-pointer group">
@@ -1530,7 +1907,9 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
                     </div>
                   )}
                 </div>
-              </div>
+              </form>
+            </div>
+          </div>
 
               {/* Restoration of missing fixed expenses */}
               {currentMonthIndex > 0 &&
@@ -1583,9 +1962,8 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
                   }
                   return null;
                 })()}
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
         {/* RIGHT COLUMN: Spending and Analysis */}
         <div className="space-y-8">
@@ -1637,9 +2015,6 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase">
-                    Restante
-                  </p>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight">
                     Restante
                   </p>
@@ -1845,123 +2220,205 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
                     .slice()
                     .reverse()
                     .map((expense) => {
-                      const isUnlocked = unlockedExpenses[expense.id];
-
                       return (
                         <div
                           key={expense.id}
-                          className={`p-4 flex justify-between items-center group transition-all ${isUnlocked ? "bg-indigo-50/50 dark:bg-indigo-900/10 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-900/30" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/50"}`}
+                          ref={editingVariableId === expense.id ? editCardRef : null}
+                          onClick={() => {
+                            if (editingVariableId !== expense.id) {
+                              setOriginalVariableExpense({ ...expense });
+                              setEditingVariableId(expense.id);
+                            }
+                          }}
+                          className={`flex flex-col group transition-all cursor-pointer border-b border-slate-50 dark:border-slate-800 ${editingVariableId === expense.id ? "p-4 bg-indigo-50/30 dark:bg-indigo-900/10 ring-1 ring-inset ring-indigo-100/50 dark:ring-indigo-900/20" : "p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50"}`}
                         >
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div
-                              onClick={() =>
-                                setUnlockedExpenses((prev) => ({
-                                  ...prev,
-                                  [expense.id]: !isUnlocked,
-                                }))
-                              }
-                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${isUnlocked ? "bg-indigo-600 text-white shadow-lg scale-110" : "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400"}`}
-                            >
-                              {isUnlocked ? (
-                                <Unlock size={18} />
-                              ) : (
-                                getCategoryIcon(expense.category)
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              {isUnlocked ? (
-                                <div className="flex flex-col space-y-2">
+                          {editingVariableId === expense.id ? (
+                            <div className="flex flex-col space-y-3 w-full">
+                              {/* Header: Icon and Actions */}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg">
+                                    <Unlock size={14} />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Editando Gasto</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (originalVariableExpense) {
+                                        updateVariableExpense(currentMonthIndex, expense.id, originalVariableExpense);
+                                      }
+                                      setEditingVariableId(null);
+                                      setOriginalVariableExpense(null);
+                                    }}
+                                    className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 bg-slate-100 dark:bg-slate-800 transition-all border border-transparent hover:border-rose-100 dark:hover:border-rose-900/30"
+                                    title="Cancelar"
+                                  >
+                                    <X size={18} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingVariableId(null);
+                                      setOriginalVariableExpense(null);
+                                      showToast("Cambios guardados", "success");
+                                    }}
+                                    className="p-2 rounded-xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 transition-all hover:scale-110"
+                                    title="Fijar cambios"
+                                  >
+                                    <Check size={18} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfirmConfig({
+                                        isOpen: true,
+                                        title: "Eliminar Gasto",
+                                        message: `¿Estás seguro de que deseas eliminar el gasto "${expense.description}"?`,
+                                        confirmText: "Sí, eliminar",
+                                        type: "danger",
+                                        onConfirm: () => {
+                                          removeVariableExpense(currentMonthIndex, expense.id);
+                                          setEditingVariableId(null);
+                                          showToast("Gasto eliminado", "error");
+                                        },
+                                      });
+                                    }}
+                                    className="p-2 rounded-xl text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 transition-all hover:scale-110 ml-2"
+                                    title="Eliminar gasto"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Main Fields: Description, Amount, Date */}
+                              <div className="flex flex-col space-y-3">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Concepto</label>
                                   <input
                                     type="text"
                                     value={expense.description}
+                                    onClick={(e) => e.stopPropagation()}
                                     onChange={(e) =>
-                                      updateVariableExpense(
-                                        currentMonthIndex,
-                                        expense.id,
-                                        { description: e.target.value },
-                                      )
+                                      updateVariableExpense(currentMonthIndex, expense.id, { description: e.target.value })
                                     }
-                                    className="w-full bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-lg px-2 py-1 text-sm font-bold focus:outline-none dark:text-white"
+                                    className="w-full bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white"
                                     autoFocus
                                   />
-                                  <div className="flex flex-nowrap gap-1 overflow-x-auto pb-1 mask-linear-right custom-scrollbar">
-                                    {sortedCategories.map((cat) => (
-                                      <button
-                                        key={cat}
-                                        onClick={() =>
-                                          updateVariableExpense(
-                                            currentMonthIndex,
-                                            expense.id,
-                                            { category: cat },
-                                          )
-                                        }
-                                        className={`p-1.5 rounded-lg border transition-all flex-shrink-0 ${expense.category === cat ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300"}`}
-                                        title={cat}
-                                      >
-                                        {React.cloneElement(
-                                          getCategoryIcon(cat),
-                                          { size: 12 },
-                                        )}
-                                      </button>
-                                    ))}
-                                  </div>
-                                  <AccountSelector 
-                                    value={expense.accountId || "cash"}
-                                    onChange={(val) =>
-                                      updateVariableExpense(
-                                        currentMonthIndex,
-                                        expense.id,
-                                        { accountId: val },
-                                      )
-                                    }
-                                    accounts={accounts}
-                                    size="xs"
-                                  />
                                 </div>
-                              ) : (
-                                <p className="font-bold text-slate-700 dark:text-slate-200">
-                                  {expense.description}
-                                </p>
-                              )}
-                              <div className="flex items-center space-x-2 mt-0.5">
-                                <p className="text-xs text-slate-400 dark:text-slate-500">
-                                  {new Date(expense.date).toLocaleDateString()}
-                                </p>
-                                <span className="text-[9px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-tighter bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
-                                  {accounts.find(
-                                    (a) =>
-                                      a.id === (expense.accountId || "cash"),
-                                  )?.name || "Otro"}
-                                </span>
+                                {/* Form Row: Amount & Date (Grid for compact design) */}
+                                 <div className="grid grid-cols-2 gap-3">
+                                   <div className="space-y-1">
+                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Monto</label>
+                                     <div className="relative">
+                                       <input
+                                         type="number"
+                                         value={expense.amount}
+                                         onClick={(e) => e.stopPropagation()}
+                                         onChange={(e) =>
+                                           updateVariableExpense(currentMonthIndex, expense.id, { amount: parseFloat(e.target.value) || 0 })
+                                         }
+                                         className="w-full bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50 rounded-xl px-4 py-2 text-sm font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white"
+                                       />
+                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 font-bold text-[10px] pointer-events-none">
+                                         {accounts.find(a => a.id === (expense.accountId || "cash"))?.currency || "PEN"}
+                                       </span>
+                                     </div>
+                                   </div>
+                                   <div className="space-y-1">
+                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Fecha</label>
+                                     <div className="relative">
+                                       <CalendarIcon size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" />
+                                       <input
+                                         type="date"
+                                         value={expense.date ? new Date(expense.date).toISOString().split('T')[0] : ''}
+                                         onClick={(e) => e.stopPropagation()}
+                                         onChange={(e) =>
+                                           updateVariableExpense(currentMonthIndex, expense.id, { date: new Date(e.target.value).toISOString() })
+                                         }
+                                         className="w-full bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50 rounded-xl pl-9 pr-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white appearance-none cursor-pointer"
+                                         style={{
+                                           WebkitAppearance: 'none',
+                                           MozAppearance: 'none'
+                                         }}
+                                       />
+                                     </div>
+                                   </div>
+                                 </div>
+                              </div>
+
+                              {/* Categories */}
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
+                                <div className="flex flex-wrap gap-2 p-1">
+                                  {sortedCategories.map((cat) => (
+                                    <button
+                                      key={cat}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateVariableExpense(currentMonthIndex, expense.id, { category: cat });
+                                      }}
+                                      className={`p-2 rounded-xl border transition-all flex-shrink-0 flex items-center gap-2 ${expense.category === cat ? "bg-indigo-600 text-white border-indigo-600 shadow-md scale-105" : "bg-white dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-800 hover:border-indigo-300 hover:text-indigo-500"}`}
+                                      title={cat}
+                                    >
+                                      {React.cloneElement(getCategoryIcon(cat), { size: 14 })}
+                                      {expense.category === cat && <span className="text-[10px] font-bold uppercase tracking-tighter">{cat}</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Account Selector */}
+                              <div className="pt-2 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex flex-col space-y-1 flex-1">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Cuenta utilizada:</span>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <AccountSelector 
+                                      value={expense.accountId || "cash"}
+                                      onChange={(val) =>
+                                        updateVariableExpense(currentMonthIndex, expense.id, { accountId: val })
+                                      }
+                                      accounts={accounts}
+                                      size="sm"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 p-3 rounded-xl flex items-center space-x-3 max-w-xs">
+                                  <AlertCircle size={16} className="text-amber-500 shrink-0" />
+                                  <p className="text-[9px] font-medium text-amber-600 dark:text-amber-400 leading-tight">
+                                    Los cambios se guardan automáticamente, pero puedes cancelarlos para restaurar el estado anterior.
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-3 ml-4">
-                            <div className="flex items-center">
-                              <span className="text-xs text-slate-400 mr-1">
-                                {accounts.find(
-                                  (a) => a.id === (expense.accountId || "cash"),
-                                )?.currency === "USD"
-                                  ? "$"
-                                  : "S/"}
-                              </span>
-                              {isUnlocked ? (
-                                <input
-                                  type="number"
-                                  value={expense.amount}
-                                  onChange={(e) =>
-                                    updateVariableExpense(
-                                      currentMonthIndex,
-                                      expense.id,
-                                      {
-                                        amount: parseFloat(e.target.value) || 0,
-                                      },
-                                    )
-                                  }
-                                  className="w-20 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-lg px-2 py-1 text-right text-sm font-black focus:outline-none dark:text-white"
-                                />
-                              ) : (
-                                <span className="font-black text-slate-800 dark:text-white">
+                          ) : (
+                            /* Normal View */
+                            <>
+                              <div className="flex items-center space-x-4 flex-1">
+                                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center transition-all group-hover:scale-110">
+                                  {getCategoryIcon(expense.category)}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-slate-700 dark:text-slate-200">
+                                    {expense.description}
+                                  </p>
+                                  <div className="flex items-center space-x-2 mt-0.5">
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                                      {new Date(expense.date).toLocaleDateString()}
+                                    </p>
+                                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-tighter bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
+                                      {accounts.find(
+                                        (a) =>
+                                          a.id === (expense.accountId || "cash"),
+                                      )?.name || "Otro"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-4 ml-8 pt-1">
+                                <span className="font-black text-slate-800 dark:text-white text-lg">
                                   {formatCurrency(
                                     expense.amount,
                                     accounts.find(
@@ -1970,48 +2427,9 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
                                     )?.currency || "PEN",
                                   )}
                                 </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center space-x-1">
-                              {isUnlocked && (
-                                <button
-                                  onClick={() =>
-                                    setUnlockedExpenses((prev) => ({
-                                      ...prev,
-                                      [expense.id]: false,
-                                    }))
-                                  }
-                                  className="p-2 rounded-lg text-indigo-600 bg-indigo-100 transition-colors"
-                                  title="Fijar cambios"
-                                >
-                                  <Check size={16} />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => {
-                                  setConfirmConfig({
-                                    isOpen: true,
-                                    title: "Eliminar Gasto",
-                                    message: `¿Estás seguro de que deseas eliminar el gasto "${expense.description}"?`,
-                                    confirmText: "Sí, eliminar",
-                                    type: "danger",
-                                    onConfirm: () => {
-                                      removeVariableExpense(
-                                        currentMonthIndex,
-                                        expense.id,
-                                      );
-                                      showToast("Gasto eliminado", "error");
-                                    },
-                                  });
-                                }}
-                                className="p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Eliminar"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       );
                     })}
@@ -2080,9 +2498,11 @@ const MonthlyView = ({ year, monthRelIndex, userName, onViewChange }) => {
         isOpen={confirmConfig.isOpen}
         onClose={closeConfirm}
         onConfirm={confirmConfig.onConfirm}
+        onConfirmSecondary={confirmConfig.onConfirmSecondary}
         title={confirmConfig.title}
         message={confirmConfig.message}
         confirmText={confirmConfig.confirmText}
+        confirmTextSecondary={confirmConfig.confirmTextSecondary}
         type={confirmConfig.type}
       />
 

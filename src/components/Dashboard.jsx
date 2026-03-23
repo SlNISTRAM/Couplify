@@ -30,6 +30,8 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
     restoreFinanceData,
     calculateMonthStats,
     updateAccountAdjustment,
+    updateFixedPayment,
+    updateFixedExpenseMetadata,
     accounts,
     loading,
     error
@@ -38,8 +40,9 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
   console.log('Dashboard render:', { getMonthsByYear, monthsDataLength: monthsData?.length });
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [payingCard, setPayingCard] = useState(null); // The card object being paid
+  const [payingAlert, setPayingAlert] = useState(null); // The alert object being paid
   const [payingSource, setPayingSource] = useState(null); // The source account object being selected
   
   // Onboarding Tour State
@@ -106,9 +109,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
   // Get current month stats for balances
   const currentMonthGlobalIndex = monthsData.findIndex(m => m.year === selectedYear && m.monthIndex === currentMonth);
   const currentMonthStats = currentMonthGlobalIndex !== -1 ? calculateMonthStats(currentMonthGlobalIndex) : null;
-  const accountBalances = currentMonthStats?.accountBalances || {};
-
-  // Logic for Credit Card Due Date Notifications
+  const accountBalances = currentMonthStats?.accountBalances || {};  // Logic for Combined Payment Notifications
   const today = new Date();
   const currentDay = today.getDate();
   
@@ -122,35 +123,82 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
     return daysUntil <= 3 && daysUntil >= -2;
   });
 
-  const handleQuickPay = (card, sourceId) => {
-    const debtAmount = Math.abs(accountBalances[card.id]?.balance || 0);
+  const upcomingFixedPayments = [];
+  if (currentMonthGlobalIndex !== -1) {
+    const month = monthsData[currentMonthGlobalIndex];
+    const payments = month.payments || {};
     
-    // 1. Set Card to 0
-    updateAccountAdjustment(currentMonthGlobalIndex, card.id, debtAmount);
+    (month.fixedExpenses || []).forEach(exp => {
+        const p = payments[exp.id];
+        if (p?.amountPaid >= exp.amount) return; // Already paid
+        if (!exp.dueDate) return; // No due date set
+        
+        const daysUntil = exp.dueDate - currentDay;
+        // Notify if due is within next 3 days or already passed (within current month)
+        if (daysUntil <= 3) {
+            upcomingFixedPayments.push({
+                ...exp,
+                type: 'fixed',
+                daysUntil,
+                amount: exp.amount
+            });
+        }
+    });
+  }
+
+  const allAlerts = [
+    ...upcomingPayments.map(card => ({
+        id: card.id,
+        name: card.name,
+        type: 'credit',
+        daysUntil: card.dueDate - currentDay,
+        amount: Math.abs(accountBalances[card.id]?.balance || 0),
+        currency: card.currency,
+        raw: card
+    })),
+    ...upcomingFixedPayments.map(exp => ({
+        id: exp.id,
+        name: exp.name,
+        type: 'fixed',
+        daysUntil: exp.daysUntil,
+        amount: exp.amount,
+        currency: 'PEN', // Fixed payments are usually in base currency
+        raw: exp
+    }))
+  ].sort((a, b) => a.daysUntil - b.daysUntil);
+
+  const handleQuickPay = (alert, sourceId) => {
+    if (alert.type === 'credit') {
+      const debtAmount = Math.abs(accountBalances[alert.id]?.balance || 0);
+      // 1. Set Card to 0
+      updateAccountAdjustment(currentMonthGlobalIndex, alert.id, debtAmount);
+      // 2. Deduct from source
+      updateAccountAdjustment(currentMonthGlobalIndex, sourceId, -debtAmount);
+    } else {
+      // Fixed Payment
+      // 1. Update account metadata for this expense
+      updateFixedExpenseMetadata(currentMonthGlobalIndex, alert.id, { accountId: sourceId }, true);
+      // 2. Mark as paid
+      updateFixedPayment(currentMonthGlobalIndex, alert.id, alert.amount);
+    }
     
-    // 2. Deduct from source
-    updateAccountAdjustment(currentMonthGlobalIndex, sourceId, -debtAmount);
-    
-    setPayingCard(null);
+    setPayingAlert(null);
     setPayingSource(null);
   };
-
-
-
 
   return (
       <div id="dashboard-content" className="space-y-12">
         <InteractiveTour run={runTour} setRun={setRunTour} onTourFinish={() => onViewChange('month')} />
         {/* Payments Notification Bar */}
-        {upcomingPayments.length > 0 && (
+        {allAlerts.length > 0 && (
           <div className="animate-fade-in-down">
-            {upcomingPayments.map(card => {
-              const daysUntil = card.dueDate - currentDay;
+            {allAlerts.map(alert => {
+              const daysUntil = alert.daysUntil;
               const isUrgent = daysUntil <= 1;
-              const debt = Math.abs(accountBalances[card.id]?.balance || 0);
+              const isFixed = alert.type === 'fixed';
               
               return (
-                <div key={card.id} className={`p-4 rounded-[24px] border-2 mb-3 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${isUrgent ? 'bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-900/30'}`}>
+                <div key={`${alert.type}-${alert.id}`} className={`p-4 rounded-[24px] border-2 mb-3 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${isUrgent ? 'bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-900/30'}`}>
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${isUrgent ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-amber-500 text-white shadow-amber-500/20'}`}>
                       <AlertTriangle size={24} />
@@ -160,20 +208,20 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
                         {daysUntil < 0 ? 'Pago Vencido' : daysUntil === 0 ? '¡Hoy vence tu pago!' : `Vence en ${daysUntil} ${daysUntil === 1 ? 'día' : 'días'}`}
                       </h4>
                       <p className="text-slate-600 dark:text-slate-300 text-xs font-bold leading-none mt-1">
-                        Tarjeta <span className="text-slate-800 dark:text-white font-black">{card.name}</span>: {formatCurrency(debt, card.currency)}
+                        {isFixed ? 'Pago Fijo' : 'Tarjeta'} <span className="text-slate-800 dark:text-white font-black">{alert.name}</span>: {formatCurrency(alert.amount, alert.currency)}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0 w-full md:w-auto md:justify-end">
-                    {payingCard?.id === card.id ? (
+                    {payingAlert?.type === alert.type && payingAlert?.id === alert.id ? (
                       payingSource ? (
                         <div className="flex items-center flex-wrap gap-2 animate-scale-in bg-white dark:bg-slate-900/80 p-2 rounded-[20px] border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
                            <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest px-2">
                              ¿Confirmar pago desde {payingSource.name}?
                            </span>
                            <button 
-                             onClick={() => handleQuickPay(card, payingSource.id)} 
+                             onClick={() => handleQuickPay(alert, payingSource.id)} 
                              className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all"
                            >
                              Sí, Confirmar
@@ -199,7 +247,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
                             </button>
                           ))}
                           <button 
-                            onClick={() => { setPayingCard(null); setPayingSource(null); }}
+                            onClick={() => { setPayingAlert(null); setPayingSource(null); }}
                             className="p-2 text-slate-400 hover:bg-rose-100 dark:hover:bg-slate-800 hover:text-rose-500 rounded-xl transition-colors ml-1"
                           >
                             <X size={16} />
@@ -208,10 +256,10 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
                       )
                     ) : (
                       <button 
-                        onClick={() => setPayingCard(card)}
+                        onClick={() => setPayingAlert(alert)}
                         className={`px-6 py-2 rounded-xl text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 whitespace-nowrap ${isUrgent ? 'bg-rose-500 shadow-rose-500/20 hover:bg-rose-600 hover:shadow-rose-500/40' : 'bg-amber-500 shadow-amber-500/20 hover:bg-amber-600 hover:shadow-amber-500/40'}`}
                       >
-                        Ya pagué
+                        Pagar ahora
                       </button>
                     )}
                   </div>
@@ -331,35 +379,43 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
                   <span>Transferencia</span>
                 </button>
                 <button 
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors whitespace-nowrap flex-shrink-0"
+                  onClick={() => { setSelectedAccountId('new'); setIsSettingsOpen(true); }}
+                  className="flex items-center space-x-1 text-[10px] font-black text-indigo-500 hover:text-indigo-600 transition-colors uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-900/10 whitespace-nowrap flex-shrink-0"
                 >
-                  Configurar Cuentas
+                  <span>Nueva Cuenta</span>
                 </button>
               </div>
           </div>
           <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar snap-x snap-mandatory">
               {Object.entries(accountBalances)
                 .filter(([, data]) => data.type !== 'vault')
-                .map(([id, data]) => {
-                  const isCredit = data.type === 'credit';
-                  const isNegative = data.balance < 0;
-                  
-                  return (
-                    <div key={id} className={`app-card p-5 border-l-4 ${isNegative ? 'border-l-rose-500' : 'border-l-emerald-500'} hover:scale-[1.02] transition-transform w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 snap-center`}>
+                .map(([id, data]) => (
+                    <div 
+                      key={id} 
+                      onClick={() => { setSelectedAccountId(id); setIsSettingsOpen(true); }}
+                      className={`app-card p-5 border-l-4 ${data.balance < 0 ? 'border-l-rose-500' : 'border-l-emerald-500'} cursor-pointer hover:scale-[1.02] active:scale-95 transition-all w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 snap-center group`}
+                    >
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{data.name}</span>
-                            <div className={`p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 ${isNegative ? 'text-rose-500' : 'text-emerald-500'}`}>
+                            <div className={`p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 ${data.balance < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
                                 {id === 'cash' ? <Banknote size={14} /> : id === 'bank' ? <Wallet size={14} /> : <CreditCard size={14} />}
                             </div>
                         </div>
 
-                        {isCredit ? (
+                        {data.type === 'credit' ? (
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Deuda Actual</p>
-                                <p className={`text-2xl font-black tracking-tight ${isNegative ? 'text-rose-600' : 'text-slate-800 dark:text-white'}`}>
-                                    {formatCurrency(Math.abs(data.balance), data.currency)}
-                                </p>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Pago Próximo</p>
+                                        <p className={`text-2xl font-black tracking-tight ${data.statementBalance < 0 ? 'text-rose-600' : 'text-slate-800 dark:text-white'}`}>
+                                            {formatCurrency(Math.abs(data.statementBalance), data.currency)}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase">Deuda Total</p>
+                                        <p className="text-xs font-black text-slate-500">{formatCurrency(Math.abs(data.balance), data.currency)}</p>
+                                    </div>
+                                </div>
                                 <div className="pt-2 flex justify-between items-end">
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase">Disponible</p>
@@ -388,8 +444,7 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
                             <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 ml-1">{formatCurrency(data.spent, data.currency)}</span>
                         </div>
                     </div>
-                  );
-              })}
+                ))}
           </div>
       </section>
 
@@ -398,12 +453,16 @@ function Dashboard({ selectedYear, currentMonth, userName, onEditName, onViewCha
       </div>
 
       {/* Vaults Section */}
-      <BovedasSection accountBalances={accountBalances} />
+      <BovedasSection 
+        accountBalances={accountBalances} 
+        onAccountClick={(id) => { setSelectedAccountId(id); setIsSettingsOpen(true); }} 
+      />
 
       {/* Account Settings Modal */}
       <AccountSettingsModal 
         isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
+        onClose={() => { setIsSettingsOpen(false); setTimeout(() => setSelectedAccountId(null), 300); }} 
+        selectedAccountId={selectedAccountId}
         accountBalances={accountBalances}
         currentMonthIndex={currentMonthGlobalIndex}
       />
